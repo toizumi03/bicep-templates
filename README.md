@@ -14,4 +14,4 @@ New-AzResourceGroupDeployment -ResourceGroupName <resource-group-name> -Template
 ~~~
 
 # parameter.json
-VM のパスワード等の固有の情報を含むため、必要に応じて変更しご利用ください。
+parameter.json からパラメーター指定したい場合は、VM のパスワード等の固有の情報を含むため、必要に応じて変更しご利用ください。
