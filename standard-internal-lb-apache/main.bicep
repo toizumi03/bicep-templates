@@ -76,7 +76,7 @@ module backendvms '../modules/ubuntu20.04.bicep' = [for i in range(0, numberOfIn
     location: locationSite1
     subnetId: cloud_vnet.properties.subnets[0].id
     loadBalancerBackendAddressPoolsId: internalLB.outputs.loadBalancerbackendAddressPools_id
-    usePublicIP: true // true にしなければ apache のインストールに失敗します。()
+    usePublicIP: true
     customData: loadFileAsBase64('cloud-init.yml')
   }
 }]
