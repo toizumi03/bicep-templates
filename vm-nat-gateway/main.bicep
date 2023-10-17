@@ -76,7 +76,7 @@ module ubuntuvm '../modules/ubuntu20.04.bicep' = {
 module windowsvm '../modules/windows-server2022.bicep' = {
   name: 'windows-vm'
   params: {
-    vmName: 'windows-server-2022-vm'
+    vmName: 'win2022-vm'
     VMadminUsername: vmAdminUsername
     VMadminpassword: vmAdminPassword
     location: locationSite1
