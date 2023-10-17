@@ -11,6 +11,7 @@ param hostId string = ''
 param vmSize string = 'Standard_D2s_v3'
 param enableManagedIdentity bool = false
 param privateIpAddress string = ''
+param nicnsg string = ''
 param customData string = ''
 param enableNetWatchExtention bool = false
 param enableIPForwarding bool = false
@@ -39,6 +40,7 @@ resource nic 'Microsoft.Network/networkInterfaces@2022-07-01' = {
   name: 'nic-${vmNameSuffix}'
   location: location
   properties: {
+    networkSecurityGroup: nicnsg != '' ? { id: nicnsg } : null
     ipConfigurations: [
       {
         name: 'ipconfig1'
