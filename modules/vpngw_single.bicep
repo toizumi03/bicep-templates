@@ -3,6 +3,7 @@ param gatewayName string
 param vnetName string
 param bgpAsn int = 0
 param enablePrivateIpAddress bool = false
+param gatewaydefalutsite string = ''
 param useExisting bool = false
 
 resource vnet01 'Microsoft.Network/virtualNetworks@2023-04-01' existing =  {
@@ -48,6 +49,9 @@ resource vpngw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' = if (!useE
       asn: bgpAsn
     }
     enablePrivateIpAddress: enablePrivateIpAddress
+    gatewayDefaultSite: gatewaydefalutsite != '' ? {
+      id: gatewaydefalutsite
+    } : null
   }
 }
 
