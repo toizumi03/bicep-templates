@@ -1,4 +1,4 @@
-S2S VPN configuration that using Active-Active BGP configuration and Local Network Gateway.
+S2S VPN configuration that using BGP configuration and Local Network Gateway.
 
 ```mermaid
 graph TB;
@@ -6,28 +6,27 @@ graph TB;
 subgraph GR2[Azure JapanWest]
   subgraph GV2[onpre_vnet:10.100.0.0/16]
      subgraph GVS4[default:10.100.1.0/24]
-      VPNGW2{{"VPN Gateway<br/>Param:<br/>Name:onpre-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:true<br/>AS:65020"}}
+      VPNGW2{{"VPN Gateway<br/>Param:<br/>Name:onpre-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:false<br/>AS:65020"}}
     end
       subgraph GVS3[default:10.100.0.0/24]
         CP2("VM<br/>Name:onpre-vm")
     end
 end
-    LNGW2("Local Network Gateway * 2: <br/>Name:lng-cloud1<br/>Name:lng-cloud2")
+    LNGW2("Local Network Gateway: <br/>Name:lng-cloud1")
 end
 subgraph GR1[Azure JapanEast]
   subgraph GV1[cloud_vnet:10.0.0.0/16]
       subgraph GVS2[GatewaySubnet:10.0.1.0/24]
-        VPNGW1{{"VPN Gateway<br/>Param:<br/>Name:cloud-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:true<br/>AS:65010"}}
+        VPNGW1{{"VPN Gateway<br/>Param:<br/>Name:cloud-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:false<br/>AS:65010"}}
       end
       subgraph GVS1[default:10.0.0.0/24]
         CP1("VM<br/>Name:cloud-vm")
       end
 end
-    LNGW1("Local Network Gateway * 2<br/>Name:lng-onp1<br/>Name:lng-onp2")
+    LNGW1("Local Network Gateway<br/>Name:lng-onp1")
 end
 
 %% Relation for resources
-VPNGW1 --S2S connection--- VPNGW2
 VPNGW1 --S2S connection--- VPNGW2
 
 %% Groups style
