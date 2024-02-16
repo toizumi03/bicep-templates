@@ -27,7 +27,7 @@ end
 end
 
 %% Relation for resources
-VPNGW1 --S2S connection--- VPNGW2
+VPNGW1 --IPSec connection--- VPNGW2
 
 %% Groups style
 classDef GSR fill:#fff,color:#1490df,stroke:#1490df
