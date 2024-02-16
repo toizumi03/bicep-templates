@@ -1,4 +1,4 @@
-VPN Transit Configuration Between 3 VNets with BGP
+VPN Transit Configuration Between 3 VNets with BGP.
 
 ```mermaid
 graph TB;
