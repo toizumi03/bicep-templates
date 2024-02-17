@@ -6,7 +6,7 @@ graph TB;
 subgraph GR2[Azure JapanWest]
   subgraph GonpV[onpre_vnet:192.168.0.0/16]
      subgraph GonpS1[GatewaySubnet:192.168.1.0/24]
-      VPNGW2{{"VPN Gateway<br/>Name:onpre-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:false<br/>AS:65010"}}
+      VPNGW2{{"VPN Gateway<br/>Name:onpre-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:true<br/>AS:65010"}}
     end
       subgraph GonpS2[default:192.168.0.0/24]
         CP4("VM<br/>Name:onpre-vm")
