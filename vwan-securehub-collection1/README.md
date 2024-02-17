@@ -1,4 +1,4 @@
-Configuration with S2S VPN connection between Virtual WAN and Vnet.
+Configuration with S2S VPN connection between Secure Hub and Vnet.
 
 ```mermaid
 graph TB;
