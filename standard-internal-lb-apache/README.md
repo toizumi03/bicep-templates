@@ -1,4 +1,4 @@
-Configuring access to a VM with Apache installed via ALB.
+Configuring access to a VM with Apache installed via internal ALB.
 
 ```mermaid
 graph TB;
