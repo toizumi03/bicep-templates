@@ -13,19 +13,19 @@ subgraph GR1[Azure JapanEast]
       end
   end
   subgraph GV2[spoke_vnet1:10.10.0.0/16]
-      subgraph GVS3[default:10.10.0.0/24]
+      subgraph GVS3[default:10.10.0.0/24<br/>UDR:onpre_vnet NextHop:AzFW_PrivateIP]
         CP3("VM<br/>Name:spoke-vm1")
       end
 end
   subgraph GV3[spoke_vnet2:10.20.0.0/16]
-      subgraph GVS4[default:10.20.0.0/24]
+      subgraph GVS4[default:10.20.0.0/24<br/>UDR:onpre_vnet NextHop:AzFW_PrivateIP]
         CP4("VM<br/>Name:spoke-vm2")
       end
 end
 end
 subgraph GR2[Azure JapanWest]
   subgraph ONPV1[onpre_vnet:10.100.0.0/16]
-      subgraph ONPS2[default:10.100.0.0/24]
+      subgraph ONPS2[default:10.100.0.0/24<br/>UDR:spoke_vnet1,2 NextHop:AzFW_PrivateIP]
         CP2("VM<br/>Name:onpre-vm")
     end
 end
