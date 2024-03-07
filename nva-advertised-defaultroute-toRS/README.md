@@ -5,7 +5,7 @@ graph TB;
 %% Groups and Services
 subgraph GR2[Azure JapanWest]
   subgraph GV2[onpre_vnet:10.100.0.0/16]
-     subgraph GVS6[default:10.100.1.0/24]
+     subgraph GVS6[GatewaySubnet:10.100.1.0/24]
       VPNGW2{{"VPN Gateway<br/>Name:onpre-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:true<br/>AS:65020"}}
     end
       subgraph GVS7[default:10.100.0.0/24]
