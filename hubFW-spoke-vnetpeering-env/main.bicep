@@ -3,8 +3,7 @@ param locationSite2 string
 param vmAdminUsername string
 @secure()
 param vmAdminPassword string
-var useExisting = false
-
+param enablediagnostics bool
 
 /* ****************************** Cloud-Vnet ****************************** */
 
@@ -98,6 +97,7 @@ module azfw '../modules/azurefirewall.bicep' = {
     firewallPolicyID: firewall_policy.id
     skuname: 'AZFW_VNet'
     skutier: 'Standard'
+    enablediagnostics: enablediagnostics
   }
 }
 
