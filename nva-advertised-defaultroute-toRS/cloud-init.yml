@@ -5,6 +5,8 @@ write_files:
   - path: /tmp/frr.conf
     content: |
       ip route 10.0.3.0/24 10.0.1.1
+      ip route 0.0.0.0/1 10.0.1.1
+      ip route 128.0.0.0/1 10.0.1.1
       !
       router bgp 65010
       neighbor 10.0.3.4 remote-as 65515
@@ -13,11 +15,12 @@ write_files:
       neighbor 10.0.3.5 ebgp-multihop 255
       !
       address-family ipv4 unicast
-        neighbor 10.0.3.4 default-originate
+        //neighbor 10.0.3.4 default-originate
+        redistribute static
         neighbor 10.0.3.4 soft-reconfiguration inbound
         neighbor 10.0.3.4 route-map rmap-bogon-asns in
         neighbor 10.0.3.4 route-map rmap-azure-asns out
-        neighbor 10.0.3.5 default-originate
+        //neighbor 10.0.3.5 default-originate
         neighbor 10.0.3.5 soft-reconfiguration inbound
         neighbor 10.0.3.5 route-map rmap-bogon-asns in
         neighbor 10.0.3.5 route-map rmap-azure-asns out
