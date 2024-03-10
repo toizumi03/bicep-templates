@@ -22,9 +22,16 @@ resource rt_nvasubnet 'Microsoft.Network/routeTables@2023-04-01' = {
   properties: {
     routes: [
       {
+        name: 'toInternet1'
+        properties: {
+          addressPrefix: '0.0.0.0/1'
+          nextHopType: 'Internet'
+        }
+      }
+      {
         name: 'toInternet'
         properties: {
-          addressPrefix: '0.0.0.0/0'
+          addressPrefix: '128.0.0.0/1'
           nextHopType: 'Internet'
         }
       }
