@@ -9,10 +9,10 @@
             "value": "japanwest"
         },
         "vmAdminUsername": {
-            "value": "toizumi"
+            "value": "vmAdminUsername"
         },
         "vmAdminPassword": {
-            "value": "Pikupiku1213"
+            "value": "vmAdminPassword"
         },
         "enablediagnostics": {
             "value": false
