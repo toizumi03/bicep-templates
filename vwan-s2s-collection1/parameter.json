@@ -13,6 +13,9 @@
         },
         "vmAdminPassword": {
             "value": "vmAdminPassword"
+        },
+        "enablediagnostics": {
+            "value": false
         }
     }
 }
