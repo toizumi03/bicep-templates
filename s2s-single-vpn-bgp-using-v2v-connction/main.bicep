@@ -4,7 +4,7 @@ param vmAdminUsername string
 @secure()
 param vmAdminPassword string
 var useExisting = false
-
+param enablediagnostics bool
 
 /* ****************************** Cloud-Vnet ****************************** */
 
@@ -52,6 +52,8 @@ module cloudvpngateway '../modules/vpngw_single.bicep' = {
     enablePrivateIpAddress: false
     bgpAsn: 65010
     useExisting: useExisting
+    logAnalyticsId: logAnalytics.id
+    enablediagnostics: enablediagnostics
   }
 }
 
@@ -133,6 +135,8 @@ module onprevpngateway '../modules/vpngw_single.bicep' = {
     vnetName: onpre_vnet.name
     enablePrivateIpAddress: false
     bgpAsn: 65020
+    logAnalyticsId: logAnalytics.id
+    enablediagnostics: enablediagnostics
   }
 }
 
@@ -167,4 +171,12 @@ module onprevm '../modules/ubuntu20.04.bicep' = {
     usePublicIP: true
     subnetId: onpre_vnet.properties.subnets[0].id
   }
+}
+
+/* ****************************** enable diagnostic logs ****************************** */
+
+var logAnalyticsWorkspace = '${uniqueString(resourceGroup().id)}la'
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if (enablediagnostics) {
+  name: logAnalyticsWorkspace
+  location: locationSite1
 }
