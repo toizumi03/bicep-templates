@@ -4,7 +4,7 @@ param vmAdminUsername string
 @secure()
 param vmAdminPassword string
 var useExisting = false
-
+param enablediagnostics bool
 
 /* ****************************** Cloud-Vnet ****************************** */
 
@@ -52,6 +52,8 @@ module cloudvpngateway '../modules/vpngw_single.bicep' = {
     enablePrivateIpAddress: false
     bgpAsn: 65010
     useExisting: useExisting
+    logAnalyticsId: logAnalytics.id
+    enablediagnostics: enablediagnostics
   }
 }
 
@@ -209,6 +211,8 @@ module onprevpngateway '../modules/vpngw_single.bicep' = {
     vnetName: onpre_vnet.name
     enablePrivateIpAddress: false
     bgpAsn: 65020
+    logAnalyticsId: logAnalytics.id
+    enablediagnostics: enablediagnostics
   }
 }
 
