@@ -2,8 +2,6 @@ param locationSite1 string
 param vmAdminUsername string
 @secure()
 param vmAdminPassword string
-var useExisting = false
-
 
 /* ****************************** Cloud-Vnet ****************************** */
 
