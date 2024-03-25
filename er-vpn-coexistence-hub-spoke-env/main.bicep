@@ -248,3 +248,12 @@ module onprevm '../modules/ubuntu20.04.bicep' = {
     subnetId: onpre_vnet.properties.subnets[0].id
   }
 }
+
+/* ****************************** enable diagnostic logs ****************************** */
+
+var logAnalyticsWorkspace = '${uniqueString(resourceGroup().id)}la'
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if (enablediagnostics) {
+  name: logAnalyticsWorkspace
+  location: locationSite1
+}
+
