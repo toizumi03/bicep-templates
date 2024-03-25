@@ -15,7 +15,7 @@
             "value": "vmAdminUsername"
         }
          "enablediagnostics": {
-            "value": true
+            "value": false
         }
     }
 }
