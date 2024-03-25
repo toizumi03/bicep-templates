@@ -43,7 +43,7 @@ resource cloud_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
 }
 
 var cloudvpngwName = 'cloud-vpngw'
-module cloudvpngateway '../modules/vpngw_single_copy.bicep' = {
+module cloudvpngateway '../modules/vpngw_single.bicep' = {
   name: cloudvpngwName
   params: {
     location: locationSite1
@@ -140,7 +140,7 @@ resource onpre_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
 }
 
 var onprevpngwName = 'onpre-vpngw'
-module onprevpngateway '../modules/vpngw_single_copy.bicep' = {
+module onprevpngateway '../modules/vpngw_single.bicep' = {
   name: onprevpngwName
   params: {
     location: locationSite2
