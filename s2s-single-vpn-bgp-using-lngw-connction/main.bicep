@@ -4,7 +4,7 @@ param vmAdminUsername string
 @secure()
 param vmAdminPassword string
 var useExisting = false
-
+param enablediagnostics bool
 
 /* ****************************** Cloud-Vnet ****************************** */
 
@@ -43,7 +43,7 @@ resource cloud_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
 }
 
 var cloudvpngwName = 'cloud-vpngw'
-module cloudvpngateway '../modules/vpngw_single.bicep' = {
+module cloudvpngateway '../modules/vpngw_single_copy.bicep' = {
   name: cloudvpngwName
   params: {
     location: locationSite1
@@ -52,6 +52,8 @@ module cloudvpngateway '../modules/vpngw_single.bicep' = {
     enablePrivateIpAddress: false
     bgpAsn: 65010
     useExisting: useExisting
+    logAnalyticsId: logAnalytics.id
+    enablediagnostics: enablediagnostics
   }
 }
 
@@ -138,7 +140,7 @@ resource onpre_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
 }
 
 var onprevpngwName = 'onpre-vpngw'
-module onprevpngateway '../modules/vpngw_single.bicep' = {
+module onprevpngateway '../modules/vpngw_single_copy.bicep' = {
   name: onprevpngwName
   params: {
     location: locationSite2
@@ -146,6 +148,8 @@ module onprevpngateway '../modules/vpngw_single.bicep' = {
     vnetName: onpre_vnet.name
     enablePrivateIpAddress: false
     bgpAsn: 65020
+    logAnalyticsId: logAnalytics.id
+    enablediagnostics: enablediagnostics
   }
 }
 
@@ -194,3 +198,12 @@ module onprevm '../modules/ubuntu20.04.bicep' = {
     subnetId: onpre_vnet.properties.subnets[0].id
   }
 }
+
+/* ****************************** enable diagnostic logs ****************************** */
+
+var logAnalyticsWorkspace = '${uniqueString(resourceGroup().id)}la'
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if (enablediagnostics) {
+  name: logAnalyticsWorkspace
+  location: locationSite1
+}
+
