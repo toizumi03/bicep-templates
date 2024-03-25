@@ -5,6 +5,8 @@ param bgpAsn int = 0
 param enablePrivateIpAddress bool = false
 param gatewaydefalutsite string = ''
 param useExisting bool = false
+param logAnalyticsId string
+param enablediagnostics bool
 
 resource vnet01 'Microsoft.Network/virtualNetworks@2023-04-01' existing =  {
   name: vnetName
@@ -59,6 +61,27 @@ resource extvpngw 'Microsoft.Network/virtualNetworkGateways@2022-01-01' existing
   name: gatewayName  
   }
 
+
+/* ****************************** enable diagnostic logs ****************************** */
+
+resource diagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (enablediagnostics){
+  name: '${vpngw.name}-logs'
+  scope:vpngw
+  properties: {
+    workspaceId: logAnalyticsId
+    logs: [
+      {
+        category: null
+        categoryGroup: 'allLogs'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+    ]
+  }
+}
   
 output vpngwName string = !useExisting ? vpngw.name : extvpngw.name
 output vpngwId string = !useExisting ? vpngw.id : extvpngw.id
