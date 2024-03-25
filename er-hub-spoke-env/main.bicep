@@ -3,6 +3,7 @@ param vmAdminUsername string
 @secure()
 param vmAdminPassword string
 
+
 /* ****************************** Cloud-Vnet ****************************** */
 
 module defaultNSGSite1 '../modules/nsg.bicep' = {
@@ -121,7 +122,6 @@ resource cloud_peer 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
     useRemoteGateways: true
   }
   dependsOn: [
-    cloudvpngateway
+    expressRouteGateway
   ]
 }]
-
