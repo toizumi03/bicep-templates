@@ -7,7 +7,6 @@ param useExisting bool = false
 param logAnalyticsId string
 param enablediagnostics bool
 
-
 resource vnet01 'Microsoft.Network/virtualNetworks@2023-04-01' existing =  {
   name: vnetName
   resource GatewaySubnet 'subnets' existing = {
@@ -77,7 +76,7 @@ resource vpngw 'Microsoft.Network/virtualNetworkGateways@2021-08-01' = if (!useE
 
 resource extvpngw 'Microsoft.Network/virtualNetworkGateways@2022-01-01' existing = if (useExisting) {
   name: gatewayName  
-  }
+}
 
 /* ****************************** enable diagnostic logs ****************************** */
 
