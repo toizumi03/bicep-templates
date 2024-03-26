@@ -209,6 +209,9 @@ resource routing_intent1 'Microsoft.Network/virtualHubs/routingIntent@2023-06-01
   dependsOn: [
     virtualhub1
     vhubfw1
+    diagnosticLogs
+    vnet_peering_vhub1
+    vnet_peering_vhub2
   ]
 }
 
@@ -289,6 +292,8 @@ resource routing_intent2 'Microsoft.Network/virtualHubs/routingIntent@2023-06-01
   dependsOn: [
     virtualhub2
     vhubfw2
+    diagnosticLogs2
+    vnet_peering_vhub3
   ]
 }
 
