@@ -3,7 +3,6 @@ param locationSite2 string
 param vmAdminUsername string
 @secure()
 param vmAdminPassword string
-var useExisting = false
 param enablediagnostics bool
 
 /* ****************************** Virtual Wan ****************************** */
@@ -185,8 +184,6 @@ module routemap1 '../modules/routemap.bicep' = {
   }
   dependsOn:[
     hubs2sgateway1
-    hubvpnsiteConnection1
-    hubvpnsiteConnection2
   ]
 }
 
@@ -350,6 +347,8 @@ module onprevpngateway1 '../modules/vpngw_single.bicep' = {
     vnetName: onpre_vnet1.name
     enablePrivateIpAddress: false
     bgpAsn: 65010
+    logAnalyticsId: logAnalytics.id
+    enablediagnostics: enablediagnostics
   }
 }
 
