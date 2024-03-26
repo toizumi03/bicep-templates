@@ -6,7 +6,7 @@ graph BT;
 subgraph GR2[Azure JapanEast]
   subgraph GV2[cloud_vnet:10.0.0.0/16]
      subgraph GVS6[GatewaySubnet:10.0.1.0/24]
-      VPNGW2{{"VPN Gateway<br/>Name:cloud-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:true<br/>AS:65010"}}
+      VPNGW2{{"VPN Gateway<br/>Name:cloud-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:true<br/>AS:65020"}}
     end
      subgraph GVS8[AzureFirewallSubnet:10.0.2.0/24]
         AzFW("AzureFirewall<br/>Name:AzureFirewall<br/>SKU:Standard<br/>Enable:Forcetunnel Mode")
