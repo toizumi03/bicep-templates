@@ -3,7 +3,7 @@ param vmAdminUsername string
 @secure()
 param vmAdminPassword string
 var useExisting = false
-
+param enablediagnostics bool
 
 /* ****************************** Cloud-Vnet ****************************** */
 
@@ -127,6 +127,27 @@ resource vhubfw1 'Microsoft.Network/azureFirewalls@2023-04-01' = {
   ]
 }
 
+/* ****************************** enable diagnostic logs ****************************** */
+
+resource diagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (enablediagnostics){
+  name: vhubfw1.name
+  scope: vhubfw1
+  properties: {
+    workspaceId: logAnalytics.id
+    logs: [
+      {
+        category: null
+        categoryGroup: 'allLogs'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+    ]
+  }
+}
+
 resource firewall_policy1 'Microsoft.Network/firewallPolicies@2023-04-01' = {
   name: 'policy1'
   location: locationSite1
@@ -231,6 +252,27 @@ resource vhubfw2 'Microsoft.Network/azureFirewalls@2023-04-01' = {
   ]
 }
 
+/* ****************************** enable diagnostic logs ****************************** */
+
+resource diagnosticLogs2 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (enablediagnostics){
+  name: vhubfw2.name
+  scope: vhubfw2
+  properties: {
+    workspaceId: logAnalytics.id
+    logs: [
+      {
+        category: null
+        categoryGroup: 'allLogs'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+    ]
+  }
+}
+
 resource routing_intent2 'Microsoft.Network/virtualHubs/routingIntent@2023-06-01' = {
   name: 'virtualhub2/routingIntent2'
   properties: {
@@ -323,4 +365,12 @@ module cloudvm3 '../modules/ubuntu20.04.bicep' = {
     usePublicIP: true
     subnetId: cloud_vnet3.properties.subnets[0].id
   }
+}
+
+/* ****************************** enable diagnostic logs ****************************** */
+
+var logAnalyticsWorkspace = '${uniqueString(resourceGroup().id)}la'
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if (enablediagnostics) {
+  name: logAnalyticsWorkspace
+  location: locationSite1
 }
