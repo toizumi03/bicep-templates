@@ -118,6 +118,7 @@ module azfw '../modules/azurefirewall.bicep' = {
     skuname: 'AZFW_VNet'
     skutier: 'Standard'
     enablediagnostics: enablediagnostics
+    logAnalyticsID: logAnalytics.id
   }
 }
 
