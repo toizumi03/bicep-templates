@@ -31,7 +31,7 @@ resource loadBalancer 'Microsoft.Network/loadBalancers@2023-04-01' = {
         name: 'LoadBalancerFrontend'
         properties: {
           publicIPAddress: {
-            id: resourceId('Microsoft.Network/publicIPAddresses', 'LBFrontend-pip')
+            id: LBfrontendIP.id
           }
         }
       }
