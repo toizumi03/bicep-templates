@@ -15,7 +15,7 @@ subgraph GR2[Azure JapanEast]
         AzFW("AzureFirewall<br/>Name:AzureFirewall<br/>SKU:Standard<br/>Enable:Forcetunnel Mode")
     end
       subgraph GVS7[default:10.0.0.0/24<br/>UDR:Internet NextHop:AzFW_PrivateIP]
-        CP3("VM<br/>Name:onpre-vm")
+        CP3("VM<br/>Name:cloud-vm")
     end
 end
 end
