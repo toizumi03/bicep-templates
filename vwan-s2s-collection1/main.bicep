@@ -111,6 +111,8 @@ module hubs2sgateway1 '../modules/vhubs2sgateway.bicep' = {
   location: locationSite1
   hubid: virtualhub1.outputs.virtualhubId
   vpnGatewayScaleUnit: 2
+  logAnalyticsId: logAnalytics.id
+  enablediagnostics: enablediagnostics
   }
 }
 
