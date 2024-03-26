@@ -74,4 +74,3 @@ module backendvms '../modules/ubuntu20.04.bicep' = [for i in range(0, numberOfIn
     customData: loadFileAsBase64('cloud-init.yml')
   }
 }]
-
