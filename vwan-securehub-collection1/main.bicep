@@ -125,6 +125,27 @@ resource vhubfw 'Microsoft.Network/azureFirewalls@2023-04-01' = {
   }
 }
 
+/* ****************************** enable diagnostic logs ****************************** */
+
+resource diagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (enablediagnostics){
+  name: vhubfw.name
+  scope: vhubfw
+  properties: {
+    workspaceId: logAnalytics.id
+    logs: [
+      {
+        category: null
+        categoryGroup: 'allLogs'
+        enabled: true
+        retentionPolicy: {
+          enabled: false
+          days: 0
+        }
+      }
+    ]
+  }
+}
+
 resource firewall_policy 'Microsoft.Network/firewallPolicies@2023-04-01' = {
   name: 'policy'
   location: locationSite1
@@ -176,6 +197,8 @@ module hubs2sgateway1 '../modules/vhubs2sgateway.bicep' = {
   location: locationSite1
   hubid: virtualhub1.outputs.virtualhubId
   vpnGatewayScaleUnit: 2
+  logAnalyticsId: logAnalytics.id
+  enablediagnostics: enablediagnostics
   }
 }
 
@@ -473,5 +496,3 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if
   name: logAnalyticsWorkspace
   location: locationSite1
 }
-
-
