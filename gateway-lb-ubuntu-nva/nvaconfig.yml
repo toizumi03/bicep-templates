@@ -1,0 +1,25 @@
+#cloud-config
+package_upgrade: true
+packages:
+  - nginx
+write_files:
+  - owner: www-data:www-data
+    path: /etc/nginx/sites-available/default
+    defer: true
+    content: |
+      server {
+        listen 8080;
+      }
+runcmd:
+  - service nginx restart
+  - ip link add dev br0 type bridge
+  - ip address add dev br0 192.168.0.1/24
+  - ip link set br0 up
+  - ip link add vxlan-in type vxlan id 800 remote "192.168.0.7" dstport 10800 dev eth0
+  - ip link add vxlan-ex type vxlan id 801 remote "192.168.0.7" dstport 10801 dev eth0
+  - ip address add 192.168.0.2/24 dev vxlan-in
+  - ip address add 192.168.0.3/24 dev vxlan-ex
+  - ip link set vxlan-in master br0
+  - ip link set vxlan-ex master br0
+  - ip link set vxlan-in up
+  - ip link set vxlan-ex up
