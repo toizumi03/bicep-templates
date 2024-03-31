@@ -1,7 +1,7 @@
 This template deploys a Front Door Premium with a virtual machine web server origin. Front Door uses a private endpoint, configured with Private Link service, to access the web application.
 
 ```mermaid
-graph LR;
+graph TB;
 %% Groups and Services
 subgraph GR1[Azure JapanEast]
     IT((Internet))
@@ -12,12 +12,12 @@ subgraph GR1[Azure JapanEast]
         ALB{{"Azure Load Balancer<br/>Name:internal-LB<br/>SKU:Standard<br/>frontendip:LBFrontend-pip<br/>balancingRules_frontendPort:80<br/>balancingRules_backendPort:80<br/>balancingRules_protocol:TCP<br/>ProbeRules_protocol:TCP<br/>ProbeRules_port:80<br/>ProbeRules_interval:5"}}
         CP2("VM<br/>Name:backend-vm1<br/>Option:installed Apache")
         CP3("VM<br/>Name:backend-vm2<br/>Option:installed Apache")
+        subgraph GR3 [PrivateEndPoint]
       end
 end
 end
 subgraph GR2 [Azure Frontdoor]
 end
-subgraph GR3 [PrivateEndPoint]
 end
 
 
