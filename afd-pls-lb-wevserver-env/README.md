@@ -1,7 +1,7 @@
 This template deploys a Front Door Premium with a virtual machine web server origin. Front Door uses a private endpoint, configured with Private Link service, to access the web application.
 
 ```mermaid
-graph TB;
+graph LR;
 %% Groups and Services
 subgraph GR1[Azure JapanEast]
     IT((Internet))
