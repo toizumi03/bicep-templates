@@ -39,7 +39,7 @@ end
 %% Relation for resources
 VPNGW1 --V2V connection--- VPNGW2
 VPNGW1 --V2V connection--- VPNGW2
-CP2 --BGP Peer<br/>Advertised Route: 0.0.0.0/0---> RS
+CP2 --BGP Peer<br/>Advertised Route: 0.0.0.0/1, 128.0.0.0---> RS
 RS --BGP Peer--- VPNGW1
 
 %% Groups style
