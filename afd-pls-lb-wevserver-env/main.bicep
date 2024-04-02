@@ -16,7 +16,7 @@ module frontdoor '../modules/cdn_profiles.bicep' = {
     afdlocation: 'Global'
     location: locationSite1
     sku: 'Premium_AzureFrontDoor'
-    afdEndpointName: 'afdEndpoint'
+    afdEndpointName: 'afdEndpoint-${uniqueString(resourceGroup().id)}'
     enabledState: 'Enabled'
     originGroupName: 'originGroup'
     privateLinkResourceId: privatelink.outputs.privatelinkResourceId
