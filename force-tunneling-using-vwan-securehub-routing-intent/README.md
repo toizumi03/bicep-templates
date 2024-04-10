@@ -5,32 +5,27 @@ graph TB;
 %% Groups and Services
 subgraph GR1[Azure JapanEast]
   subgraph GonpV[cloud_vnet:192.168.0.0/16]
-     subgraph GonpS1[GatewaySubnet:192.168.1.0/24]
-      VPNGW1{{"VPN Gateway<br/>Name:cloud-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:true<br/>AS:65020"}}
-    end
-      subgraph GonpS3[AzureFirewallSubnet:192.168.2.0/24]
-      AzFW("AzureFirewall<br/>Name:AzureFirewall<br/>SKU:Standard<br/>Enable:Forcetunnel Mode")
-    end
-      subgraph GonpS4[AzureFirewallManagementSubnet:192.168.3.0/24]
-  end
     subgraph GonpS2[default:192.168.0.0/24]
     CP1("VM<br/>Name:onpre-vm")
   end
-    LNGW1("Local Network Gateway: <br/>Name:lng-cloud1")
+      subgraph GonpS3[AzureFirewallSubnet:192.168.1.0/24]
+      AzFW("AzureFirewall<br/>Name:AzureFirewall<br/>SKU:Standard<br/>Enable:Forcetunnel Mode")
+    end
+      subgraph GonpS4[AzureFirewallManagementSubnet:192.168.2.0/24]
+  end
 end
 end
 subgraph GR1[Azure JapanEast]
   subgraph GV1[Virtual WAN]
     subgraph GV2[virtualhub1:10.100.0.0/24]
       subgraph SECHUB1[SecureHub1<br/>RoutingIntent/InternetTraffic:True]
-      VPNGW2{{"S2S Gateway<br/>vpnGatewayScaleUnit:2"}}
 end
 end
 end
 end
 
 %% Relation for resources
-VPNGW1 --IPSec VPN <br/>connection---- VPNGW2
+GonpV --Vnet<br/>connection---- GV2
 
 %% Groups style
 classDef GSR fill:#fff,color:#1490df,stroke:#1490df
