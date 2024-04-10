@@ -30,47 +30,22 @@ resource cloud_vnet1 'Microsoft.Network/virtualNetworks@2023-04-01' = {
         properties: {
           addressPrefix: '192.168.0.0/24'
           networkSecurityGroup: { id: defaultNSGSite1.outputs.nsgId }
-          routeTable: { id: rt1.id }
-        }
-      }
-      {
-        name: 'GatewaySubnet'
-        properties: {
-          addressPrefix: '192.168.1.0/24'
         }
       }
       {
         name: 'AzureFirewallSubnet'
         properties: {
-          addressPrefix: '192.168.2.0/24'
+          addressPrefix: '192.168.1.0/24'
         }
       }
       {
         name: 'AzureFirewallManagementSubnet'
         properties: {
-          addressPrefix: '192.168.3.0/24'
+          addressPrefix: '192.168.2.0/24'
         }
       }
     ]
    }
-}
-
-resource rt1 'Microsoft.Network/routeTables@2023-04-01' = {
-  name: 'routeTable1'
-  location: locationSite1
-  properties: {
-    disableBgpRoutePropagation: false
-    routes: [
-      {
-        name: 'defaultroute-to-AzureFirewall'
-        properties: {
-          addressPrefix: '0.0.0.0/0'
-          nextHopIpAddress: '192.168.2.4'
-          nextHopType: 'VirtualAppliance'
-        }
-      }
-    ]
-  }
 }
 
 module azfw '../modules/azurefirewall-forcetunnel.bicep' = {
@@ -78,17 +53,14 @@ module azfw '../modules/azurefirewall-forcetunnel.bicep' = {
   params: {
     azurefwName: 'AzureFirewall'
     location: locationSite1
-    subnetid: cloud_vnet1.properties.subnets[2].id
+    subnetid: cloud_vnet1.properties.subnets[1].id
     firewallPolicyID: firewall_policy.id
     skuname: 'AZFW_VNet'
     skutier: 'Standard'
-    mgdsubnetid: cloud_vnet1.properties.subnets[3].id
+    mgdsubnetid: cloud_vnet1.properties.subnets[2].id
     logAnalyticsWorkspaceId: logAnalytics.id
     enablediagnostics: enablediagnostics
   }
-  dependsOn: [
-    cloudvpngateway
-  ]
 }
 
 resource firewall_policy 'Microsoft.Network/firewallPolicies@2023-04-01' = {
@@ -135,58 +107,6 @@ resource firewall_network_rules 'Microsoft.Network/firewallPolicies/ruleCollecti
   }
 }
 
-var cloudvpngwName = 'cloud-vpngw'
-module cloudvpngateway '../modules/vpngw_act-act.bicep' = {
-  name: cloudvpngwName
-  params: {
-    location: locationSite1
-    gatewayName: cloudvpngwName
-    vnetName: cloud_vnet1.name
-    enablePrivateIpAddress: false
-    bgpAsn: 65020
-    useExisting: useExisting
-    logAnalyticsId: logAnalytics.id
-    enablediagnostics: enablediagnostics
-  }
-  dependsOn: [
-    cloudvm1
-  ]
-}
-
-var lng01Name = 'lng-cloud1'
-resource lng_cloud1 'Microsoft.Network/localNetworkGateways@2023-04-01' = {
-  name: lng01Name
-  location: locationSite1
-  properties: {
-    gatewayIpAddress: hubs2sgateway1.outputs.gwpublicip1
-    bgpSettings:{
-      asn: 65515
-      bgpPeeringAddress: hubs2sgateway1.outputs.gwdefaultbgpip1
-    }
-  }
-}
-
-// Connection from Onp to Cloud
-resource connectionOnptoCloud1 'Microsoft.Network/connections@2023-04-01' = {
-  name: 'fromOnptoCloud1'
-  location: locationSite1
-  properties: {
-    enableBgp: true
-    virtualNetworkGateway1: {
-      id: cloudvpngateway.outputs.vpngwId
-      properties:{}
-    }
-    localNetworkGateway2: {
-      id: lng_cloud1.id
-      properties:{}
-    }
-    connectionType: 'IPsec'
-    routingWeight: 0
-    sharedKey: 'sharedpass'
-  }
-}
-
-
 module cloudvm1 '../modules/ubuntu20.04.bicep' = {
   name: 'cloud-vm1'
   params: {
@@ -223,53 +143,6 @@ module virtualhub1 '../modules/virtualhub.bicep' = {
   ]
 }
 
-module hubs2sgateway1 '../modules/vhubs2sgateway.bicep' = {
-  name: 'hubs2sgateway1'
-  params:{
-  hubgatewayName: 'hubs2sgateway1'
-  location: locationSite1
-  hubid: virtualhub1.outputs.virtualhubId
-  vpnGatewayScaleUnit: 2
-  logAnalyticsId: logAnalytics.id
-  enablediagnostics: enablediagnostics
-  }
-}
-
-// vhub vpn site
-module vpnsite1 '../modules/vhubvpnsite.bicep' = {
-  name: 'vpnsite1'
-  params:{
-    siteName: 'vpnsite1'
-    location: locationSite1
-    siteAddressPrefix : cloud_vnet1.properties.addressSpace.addressPrefixes[0]
-    bgpasn : 65020
-    bgpPeeringAddress : split(cloudvpngateway.outputs.bgpPeeringAddress, ',')[0]
-    linkSpeedInMbps : 50
-    vpnDeviceIpAddress : cloudvpngateway.outputs.publicIp01Address
-    wanId : virtualwan.outputs.virtualwanId
-  }
-  dependsOn:[
-    virtualwan
-    virtualhub1
-    cloudvpngateway
-  ]
-}
-
-resource hubvpnsiteConnection1 'Microsoft.Network/vpnGateways/vpnConnections@2023-04-01' = {
-  name: 'hubs2sgateway1/${vpnsite1.name}-connection'
-  properties: {
-    connectionBandwidth: 50
-    enableBgp: true
-    sharedKey: 'sharedpass'
-    remoteVpnSite: {
-      id: vpnsite1.outputs.vpnsiteid
-    }
-  }
-  dependsOn:[
-    hubs2sgateway1
-  ]
-}
-
 resource vhubfw1 'Microsoft.Network/azureFirewalls@2023-04-01' = {
   name: 'vhubFW1'
   location: locationSite1
@@ -288,6 +161,18 @@ resource vhubfw1 'Microsoft.Network/azureFirewalls@2023-04-01' = {
     }
     firewallPolicy: {
       id: firewall_policy.id
+    }
+  }
+  dependsOn: [
+    virtualhub1
+  ]
+}
+
+resource vnet_peering_vhub1 'Microsoft.Network/virtualHubs/hubVirtualNetworkConnections@2023-05-01' = {
+  name: 'virtualhub1/vnetpeeringvhub1'
+  properties: {
+    remoteVirtualNetwork: {
+      id: cloud_vnet1.id
     }
   }
   dependsOn: [
