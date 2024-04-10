@@ -163,14 +163,12 @@ resource vhubfw1 'Microsoft.Network/azureFirewalls@2023-04-01' = {
       id: firewall_policy.id
     }
   }
-  dependsOn: [
-    virtualhub1
-  ]
 }
 
 resource vnet_peering_vhub1 'Microsoft.Network/virtualHubs/hubVirtualNetworkConnections@2023-05-01' = {
   name: 'virtualhub1/vnetpeeringvhub1'
   properties: {
+    enableInternetSecurity: true
     remoteVirtualNetwork: {
       id: cloud_vnet1.id
     }
