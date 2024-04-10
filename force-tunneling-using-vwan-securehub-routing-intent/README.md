@@ -13,7 +13,7 @@ subgraph GR1[Azure JapanEast]
     end
       subgraph GonpS4[AzureFirewallManagementSubnet:192.168.3.0/24]
   end
-    subgraph GonpS2[default:192.168.0.0/24<br/>UDR:0.0.0.0/0 NextHop:AzFW_PrivateIP]
+    subgraph GonpS2[default:192.168.0.0/24]
     CP1("VM<br/>Name:onpre-vm")
   end
     LNGW1("Local Network Gateway: <br/>Name:lng-cloud1")
