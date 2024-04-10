@@ -4,7 +4,7 @@ Azure Firewall forced tunneling configuration using Virtual WAN Routing Intent (
 graph TB;
 %% Groups and Services
 subgraph GR1[Azure JapanEast]
-  subgraph GonpV[cloud_vnet:192.168.1.0/16]
+  subgraph GonpV[cloud_vnet:192.168.0.0/16]
      subgraph GonpS1[GatewaySubnet:192.168.1.0/24]
       VPNGW1{{"VPN Gateway<br/>Name:cloud-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:true<br/>AS:65020"}}
     end
