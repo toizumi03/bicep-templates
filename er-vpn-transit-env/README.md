@@ -16,7 +16,7 @@ end
 subgraph GR1[Azure JapanEast]
   subgraph GV1[cloud_vnet:10.0.0.0/16]
       subgraph GVS2[GatewaySubnet:10.0.1.0/24]
-        VPNGW1{{"VPN Gateway<br/>Name:cloud-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:false<br/>AS:65010"}}
+        VPNGW1{{"VPN Gateway<br/>Name:cloud-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:false<br/>AS:65515"}}
         ERGW1{{"ExpressRoute Gateway<br/>Name:cloud-ergw<br/>SKU:Standard"}}
       end
       subgraph GVS1[default:10.0.0.0/24]
