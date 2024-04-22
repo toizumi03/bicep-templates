@@ -56,7 +56,7 @@ module cloudvpngateway '../modules/vpngw_act-act.bicep' = {
     gatewayName: cloudvpngwName
     vnetName: cloud_vnet.name
     enablePrivateIpAddress: false
-    bgpAsn: 65010
+    bgpAsn: 65515
     useExisting: useExisting
     logAnalyticsId: logAnalytics.id
     enablediagnostics: enablediagnostics
