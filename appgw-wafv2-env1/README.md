@@ -1,4 +1,5 @@
 Configure Application Gateway (WAFv2) using Ubuntu VM (Nginx) backend.
+Diagnostic log and bastion are optionally deployable.
 ```mermaid
 graph TB;
 %% Groups and Services
