@@ -1,6 +1,9 @@
 #cloud-config
 packages_update: true
 packages_upgrade: true
+# パッケージインストール
+packages:
+  - python3
 write_files:
   - path: /tmp/frr.conf
     content: |
@@ -43,6 +46,7 @@ write_files:
       route-map rmap-azure-asns permit 10
       exit
       !
+
 runcmd:
   # enable IP forwarding
   - sudo sed -i.org 's/#net.ipv4.ip_forward=1/net.ipv4.ip_forward=1/' /etc/sysctl.conf
