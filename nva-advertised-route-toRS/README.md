@@ -1,5 +1,12 @@
 Configuring the NVA to advertise any route to the RouteServer.
 
+By executing the following python script on the "NVA-FRR" VM, can advertise dummy routes of any number of routes to RouteServer/VPN Gateway.
+
+~~~
+wget https://raw.githubusercontent.com/toizumi03/bicep-templates/main/nva-advertised-route-toRS/bgp-route-advertised-test.py
+sudo python3 bgp-route-advertised-test.py
+~~~
+
 ```mermaid
 graph TB;
 %% Groups and Services
