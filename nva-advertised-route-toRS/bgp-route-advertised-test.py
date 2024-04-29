@@ -13,7 +13,6 @@ def generate_ip_addresses(num):
             print('/32')
         frr_file.write(content1)            
         print("指定した経路数から Dummy Route を作成し、Config に投入しました")
-        print (frr_file)
 
 content1 = '''
     neighbor 10.0.3.4 remote-as 65515
