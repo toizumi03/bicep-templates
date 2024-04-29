@@ -8,7 +8,7 @@ def generate_ip_addresses(num):
         frr_file.write("address-family ipv4 unicast\n")
         for i in range(1, num + 1):
             ip = base_ip + i
-            frr_file.write("network {ip}/32\n")
+            frr_file.write(f"network {ip}/32\n")
             print(ip, end='')
             print('/32')
         frr_file.write(content1)            
@@ -53,11 +53,9 @@ content1 = '''
     exit
     !
 '''
-
 # コマンドをリスト形式で指定
 command1 = ['cp', '/tmp/frr.conf', '/etc/frr/frr.conf']
 command2 = ['systemctl', 'restart', 'frr']
-
 # コマンドを実行
 subprocess.run(command1)
 subprocess.run(command2)
