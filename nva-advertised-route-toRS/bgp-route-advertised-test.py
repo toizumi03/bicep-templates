@@ -1,4 +1,5 @@
 import ipaddress
+import subprocess
 
 def generate_ip_addresses(num):
     base_ip = ipaddress.IPv4Address('0.0.0.0')
@@ -50,6 +51,14 @@ address-family ipv4 unicast
     exit
     !
 '''
+
+# コマンドをリスト形式で指定
+command1 = ['sudo', 'cp', '/tmp/frr.conf', '/etc/frr/frr.conf']
+command2 = ['sudo', 'systemctl', 'restart', 'frr']
+
+# コマンドを実行
+subprocess.run(command1)
+subprocess.run(command2)
 
 try:
     user_input = int(input("広報したい経路数を入力してください: "))
