@@ -10,7 +10,7 @@ def generate_ip_addresses(num):
             print(ip, end='')
             print('/32')
         frr_file.write(content)            
-        print("指定した経路数から Dummy Route を作成し、/tmp/frr.conf に追加し、Config を保存しました。")
+        print("指定した経路数から Dummy Route を作成し、Config に投入しました")
 
 content = '''
 router bgp 65010
@@ -53,8 +53,8 @@ address-family ipv4 unicast
 '''
 
 # コマンドをリスト形式で指定
-command1 = ['sudo', 'cp', '/tmp/frr.conf', '/etc/frr/frr.conf']
-command2 = ['sudo', 'systemctl', 'restart', 'frr']
+command1 = ['cp', '/tmp/frr.conf', '/etc/frr/frr.conf']
+command2 = ['systemctl', 'restart', 'frr']
 
 # コマンドを実行
 subprocess.run(command1)
