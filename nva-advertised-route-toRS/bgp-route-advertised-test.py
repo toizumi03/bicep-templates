@@ -4,6 +4,9 @@ import subprocess
 def generate_ip_addresses(num):
     base_ip = ipaddress.IPv4Address('0.0.0.0')
     with open('/tmp/frr.conf', 'w') as frr_file:
+        for i in range(1, num + 1):
+            ip = base_ip + i
+            frr_file.write(f"ip route {ip}/32 10.0.1.1\n")
         frr_file.write("router bgp 65010\n")
         frr_file.write("address-family ipv4 unicast\n")
         for i in range(1, num + 1):
@@ -13,7 +16,6 @@ def generate_ip_addresses(num):
             print('/32')
         frr_file.write(content1)            
         print("指定した経路数から Dummy Route を作成し、Config に投入しました")
-        print (frr_file)
     subprocess.run(['cp', '/tmp/frr.conf', '/etc/frr/frr.conf'])
     subprocess.run(['systemctl', 'restart', 'frr'])
 
