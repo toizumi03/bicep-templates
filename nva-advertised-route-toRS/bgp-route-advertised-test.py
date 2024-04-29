@@ -4,11 +4,11 @@ import subprocess
 def generate_ip_addresses(num):
     base_ip = ipaddress.IPv4Address('0.0.0.0')
     with open('/tmp/frr.conf', 'w') as frr_file:
-        frr_file.write("router bgp 65010")
-        frr_file.write("address-family ipv4 unicast")
+        frr_file.write(f"router bgp 65010\n")
+        frr_file.write(f"address-family ipv4 unicast\n")
         for i in range(1, num + 1):
             ip = base_ip + i
-            frr_file.write("network {ip}/32\n")
+            frr_file.write(f"network {ip}/32\n")
             print(ip, end='')
             print('/32')
         frr_file.write(content1)            
