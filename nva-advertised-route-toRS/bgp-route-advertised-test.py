@@ -15,9 +15,9 @@ def generate_ip_addresses(num):
             print(ip, end='')
             print('/32')
         frr_file.write(content1)            
-        print("指定した経路数から Dummy Route を作成し、Config に投入しました")
     subprocess.run(['cp', '/tmp/frr.conf', '/etc/frr/frr.conf'])
     subprocess.run(['systemctl', 'restart', 'frr'])
+    print("指定した経路数から Dummy Route を作成し、Config に投入しました")
 
 content1 = '''
     neighbor 10.0.3.4 remote-as 65515
