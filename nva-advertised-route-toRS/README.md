@@ -25,7 +25,7 @@ subgraph GR1[Azure JapanEast]
         RS("Azure Route Server<br/>Name:RouteServer")
       end
       subgraph GVS3[GatewaySubnet:10.0.2.0/24]
-        VPNGW1{{"VPN Gateway<br/>Name:cloud-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:true<br/>AS:65010"}}
+        VPNGW1{{"VPN Gateway<br/>Name:cloud-vpngw<br/>SKU:VpnGw1<br/>ActAct-Mode:true<br/>AS:65515"}}
       end
 end
 end
