@@ -14,6 +14,8 @@ def generate_ip_addresses(num):
         frr_file.write(content1)            
         print("指定した経路数から Dummy Route を作成し、Config に投入しました")
         print (frr_file)
+    subprocess.run(['cp', '/tmp/frr.conf', '/etc/frr/frr.conf'])
+    subprocess.run(['systemctl', 'restart', 'frr'])
 
 content1 = '''
     neighbor 10.0.3.4 remote-as 65515
@@ -53,13 +55,6 @@ content1 = '''
     exit
     !
 '''
-# コマンドをリスト形式で指定
-command1 = ['cp', '/tmp/frr.conf', '/etc/frr/frr.conf']
-command2 = ['systemctl', 'restart', 'frr']
-# コマンドを実行
-subprocess.run(command1)
-subprocess.run(command2)
-
 try:
     user_input = int(input("広報したい経路数を入力してください: "))
     generate_ip_addresses(user_input)
