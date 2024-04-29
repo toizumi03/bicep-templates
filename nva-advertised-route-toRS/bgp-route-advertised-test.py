@@ -5,16 +5,17 @@ def generate_ip_addresses(num):
     base_ip = ipaddress.IPv4Address('0.0.0.0')
     with open('/tmp/frr.conf', 'w') as frr_file:
         frr_file.write(content1)
-        frr_file.write(f"address-family ipv4 unicast")
+        frr_file.write("address-family ipv4 unicast")
         for i in range(1, num + 1):
             ip = base_ip + i
-            frr_file.write(f"network {ip} mask 255.255.255.255\n")
+            frr_file.write(f"network {ip}/32\n")
             print(ip, end='')
             print('/32')
         frr_file.write(content2)            
         print("指定した経路数から Dummy Route を作成し、Config に投入しました")
 
 content1 = '''
+ip route 10.0.3.0/24 10.0.1.1
 router bgp 65010
 neighbor 10.0.3.4 remote-as 65515
 neighbor 10.0.3.4 ebgp-multihop 255
