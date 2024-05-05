@@ -15,6 +15,9 @@ module defaultNSGSite1 '../modules/nsg.bicep' = {
 resource consumer_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   name: 'consumer-vnet'
   location: locationSite1
+  tags: {
+    tagName1: 'toizumi_recipes'
+  }
   properties: {
     addressSpace: {
       addressPrefixes: [
