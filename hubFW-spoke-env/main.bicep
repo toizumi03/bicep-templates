@@ -18,6 +18,9 @@ module defaultNSGSite1 '../modules/nsg.bicep' = {
 resource cloud_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   name: 'cloud-vnet'
   location: locationSite1
+  tags: {
+    tagName1: 'toizumi_recipes'
+  }
   properties: {
     addressSpace: {
       addressPrefixes: [
@@ -82,9 +85,9 @@ resource rt2 'Microsoft.Network/routeTables@2023-04-01' = {
     disableBgpRoutePropagation: false
     routes: [
       {
-        name: 'fw-onpre-route1'
+        name: 'fw-route'
         properties: {
-          addressPrefix: '10.100.0.0/16'
+          addressPrefix: '0.0.0.0/0'
           nextHopIpAddress: '10.0.2.4'
           nextHopType: 'VirtualAppliance'
         }
@@ -141,6 +144,7 @@ resource firewall_network_rules 'Microsoft.Network/firewallPolicies/ruleCollecti
       {
         ruleCollectionType: 'FirewallPolicyFilterRuleCollection'
         name: 'allowAll'
+        priority: 100
         action: {
           type: 'Allow'
         }
@@ -353,4 +357,3 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if
   name: logAnalyticsWorkspace
   location: locationSite1
 }
-
