@@ -14,6 +14,7 @@ module defaultNSGSite1 '../modules/nsg.bicep' = {
     name: 'nsg-site1'  
   }
 }
+
 resource cloud_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   name: 'cloud-vnet'
   location: locationSite1
@@ -77,9 +78,9 @@ resource rt2 'Microsoft.Network/routeTables@2023-04-01' = {
     disableBgpRoutePropagation: false
     routes: [
       {
-        name: 'fw-onpre-route1'
+        name: 'fw-route'
         properties: {
-          addressPrefix: '10.100.0.0/16'
+          addressPrefix: '0.0.0.0/0'
           nextHopIpAddress: '10.0.1.4'
           nextHopType: 'VirtualAppliance'
         }
@@ -98,6 +99,7 @@ module azfw '../modules/azurefirewall.bicep' = {
     skuname: 'AZFW_VNet'
     skutier: 'Standard'
     enablediagnostics: enablediagnostics
+    logAnalyticsID: logAnalytics.id
   }
 }
 
@@ -120,6 +122,7 @@ resource firewall_network_rules 'Microsoft.Network/firewallPolicies/ruleCollecti
       {
         ruleCollectionType: 'FirewallPolicyFilterRuleCollection'
         name: 'allowAll'
+        priority: 100
         action: {
           type: 'Allow'
         }
@@ -291,4 +294,12 @@ module onprevm '../modules/ubuntu20.04.bicep' = {
     usePublicIP: true
     subnetId: onpre_vnet.properties.subnets[0].id
   }
+}
+
+/* ****************************** enable diagnostic logs ****************************** */
+
+var logAnalyticsWorkspace = '${uniqueString(resourceGroup().id)}la'
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if (enablediagnostics) {
+  name: logAnalyticsWorkspace
+  location: locationSite1
 }
