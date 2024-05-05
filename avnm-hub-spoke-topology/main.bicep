@@ -16,6 +16,9 @@ module defaultNSGSite1 '../modules/nsg.bicep' = {
 resource hub_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   name: 'hub-vnet'
   location: locationSite1
+  tags: {
+    tagName1: 'toizumi_recipes'
+  }
   properties: {
     addressSpace: {
       addressPrefixes: [
