@@ -17,6 +17,9 @@ var numberOfcloudvnet = 4
 resource cloud_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = [for i in range(0, numberOfcloudvnet): {
   name: 'cloud-vnet${i}'
   location: locationSite1
+  tags: {
+    tagName1: 'toizumi_recipes'
+  }
   properties: {
     addressSpace: {
       addressPrefixes: [
