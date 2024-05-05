@@ -141,6 +141,7 @@ resource firewall_network_rules 'Microsoft.Network/firewallPolicies/ruleCollecti
       {
         ruleCollectionType: 'FirewallPolicyFilterRuleCollection'
         name: 'allowAll'
+        priority: 100
         action: {
           type: 'Allow'
         }
