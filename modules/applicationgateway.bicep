@@ -54,16 +54,6 @@ resource applicationgateway 'Microsoft.Network/applicationGateways@2023-04-01' =
           }
         }
       }
-      {
-        name: 'appGwPrivateFrontendIp'
-        properties: {
-          privateIPAllocationMethod: 'Static'
-          subnet: {
-            id: subnet_id
-          }
-          privateIPAddress: '10.0.1.10'
-        }
-      }
     ]
     frontendPorts: [
       {
