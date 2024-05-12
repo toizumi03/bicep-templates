@@ -16,7 +16,7 @@ param customData string = ''
 param enableNetWatchExtention bool = false
 param enableIPForwarding bool = false
 param usePublicIP bool = false
-param enableAcceleratedNetworking bool = false
+param enableAcceleratedNetworking bool
 param avsetId string = ''
 param applicationGatewayBackendAddressPoolsId string = ''
 param loadBalancerBackendAddressPoolsId string = ''
