@@ -1,0 +1,10 @@
+#cloud-config
+# パッケージ更新
+package_update: true
+packages_upgrade: true
+# パッケージインストール
+packages:
+  - nginx
+# コマンド実行
+runcmd:
+  - sudo systemctl start start nginx

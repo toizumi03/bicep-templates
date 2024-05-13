@@ -1,0 +1,11 @@
+#cloud-config
+# パッケージ更新
+package_update: true
+packages_upgrade: true
+# パッケージインストール
+# コマンド実行
+runcmd:
+  - sudo apt-get install tcptraceroute
+  - sudo apt-get install bc
+  - curl http://www.vdberg.org/~richard/tcpping -o /usr/bin/tcpping
+  - sudo chmod +x /usr/bin/tcpping
