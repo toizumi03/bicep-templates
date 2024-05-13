@@ -56,7 +56,7 @@ end
 end
 
 %% Relation for resources
-VPNGW1 --- VPNGW2
+VPNGW1 --S2S Connection<br/>Optional--- VPNGW2
 GV1 --Vnet Peering<br/>Remote Gateway:true---GV2
 GV1 --Vnet Peering<br/>Remote Gateway:true---GV3
 GV1 --Vnet Peering<br/>Remote Gateway:true---GV4
