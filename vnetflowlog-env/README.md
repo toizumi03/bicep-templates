@@ -9,7 +9,7 @@ subgraph GR2[Azure JapanWest Optionnal]
         VPNGW2{{"VPN Gateway<br/>Name:onpre-vpngw<br/>SKU:VpnGw1"}}
       end
       subgraph GVS50[default:192.168.0.0/24]
-        CP1("onpre-vm")
+        CP51("onpre-vm")
       end
 end
 end
