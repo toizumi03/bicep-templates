@@ -7,8 +7,9 @@ param backendHttpSettings_protocol string
 param subnet_id string
 param backendVMPrivateIPs array
 param enablediagnostics bool = false
+param wafPolicyId string
 param logAnalyticsID string
-
+ 
 resource AppGWfrontendIP 'Microsoft.Network/publicIPAddresses@2023-04-01' = {
   name: '${appGwName}-pip'
   location: location
@@ -19,7 +20,7 @@ resource AppGWfrontendIP 'Microsoft.Network/publicIPAddresses@2023-04-01' = {
     publicIPAllocationMethod: 'static'
   }
 }
-
+ 
 resource applicationgateway 'Microsoft.Network/applicationGateways@2023-04-01' = {
   name: appGwName
   location: location
@@ -52,6 +53,16 @@ resource applicationgateway 'Microsoft.Network/applicationGateways@2023-04-01' =
           publicIPAddress: {
             id: AppGWfrontendIP.id
           }
+        }
+      }
+      {
+        name: 'appGwPrivateFrontendIp'
+        properties: {
+          privateIPAllocationMethod: 'Static'
+          subnet: {
+            id: subnet_id
+          }
+          privateIPAddress: '10.0.1.10'
         }
       }
     ]
@@ -118,21 +129,14 @@ resource applicationgateway 'Microsoft.Network/applicationGateways@2023-04-01' =
         }
       }
     ]
-    webApplicationFirewallConfiguration: {
-      fileUploadLimitInMb: 100
-      enabled: true
-      firewallMode: 'Detection'
-      maxRequestBodySizeInKb: 128
-      requestBodyCheck: true
-      ruleSetType: 'OWASP'
-      ruleSetVersion: '3.2'
+    firewallPolicy: {
+      id: wafPolicyId
     }
   }
 }
-
-
+ 
 /* ****************************** enable diagnostic logs ****************************** */
-
+ 
 resource diagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview' = if (enablediagnostics){
   name: appGwName
   scope: applicationgateway
@@ -151,5 +155,5 @@ resource diagnosticLogs 'Microsoft.Insights/diagnosticSettings@2021-05-01-previe
     ]
   }
 }
-
+ 
 output appgw_backendpool_id string = applicationgateway.properties.backendAddressPools[0].id
