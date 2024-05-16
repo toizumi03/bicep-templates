@@ -17,9 +17,6 @@ module defaultNSGSite1 '../modules/nsg.bicep' = {
 resource cloud_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   name: 'cloud-vnet'
   location: locationSite1
-  tags: {
-    tagName1: 'toizumi_recipes'
-  }
   properties: {
     addressSpace: {
       addressPrefixes: [
@@ -68,7 +65,21 @@ module appgwwafv2 '../modules/applicationgateway.bicep' ={
     subnet_id: cloud_vnet.properties.subnets[1].id
     backendVMPrivateIPs:[for i in range(0,numberOfInstances):backendvms[i].outputs.privateIP]
     enablediagnostics: enablediagnostics
+    wafPolicyId: wafPolicy.outputs.policyId
     logAnalyticsID: logAnalytics.id
+  }
+  dependsOn: [
+    wafPolicy
+  ]
+}
+
+/* ****************************** WAF Policy ****************************** */
+ 
+module wafPolicy '../modules/applicationgatewaywaf.bicep' = {
+  name: 'wafPolicy'
+  params: {
+    wafName: 'appGwWafPolicy'
+    location: locationSite1
   }
 }
 
