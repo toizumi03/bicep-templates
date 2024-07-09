@@ -1,9 +1,9 @@
 targetScope = 'tenant'
 param locationSite1 string
-var sub1Id = ''
-var sub1rgName = ''
-var sub2Id = ''
-var sub2rgName = ''
+param sub1Id string
+param sub1rgName string
+param sub2Id string
+param sub2rgName string
 
 // create sub1 rg, resource
 module rg1 'createRG.bicep' = {
