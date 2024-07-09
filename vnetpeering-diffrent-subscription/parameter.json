@@ -4,6 +4,18 @@
     "parameters": {
         "locationSite1": {
             "value": "japaneast"
+        },
+        "sub1Id": {
+            "value": ""
+        },
+        "sub1rgName": {
+            "value": ""
+        },
+        "sub2Id": {
+            "value": ""
+        },
+        "sub2rgName": {
+            "value": ""
         }
     }
 }
