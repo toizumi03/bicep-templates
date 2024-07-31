@@ -478,21 +478,21 @@ resource onpre_vnet2 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   properties: {
     addressSpace: {
       addressPrefixes: [
-        '192.168.10.0/16'
+        '192.169.0.0/16'
       ]
     }
     subnets: [
       {
         name: 'default'
         properties: {
-          addressPrefix: '192.168.10.0/24'
+          addressPrefix: '192.169.1.0/24'
           networkSecurityGroup: { id: defaultNSGSite2.outputs.nsgId }
         }
       }
       {
         name: 'GatewaySubnet'
         properties: {
-          addressPrefix: '192.168.10.0/24'
+          addressPrefix: '192.169.2.0/24'
         }
       }
     ]
