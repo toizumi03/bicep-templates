@@ -1,6 +1,6 @@
 Configuring the Catalyst 8000v and VPN Gateway for a VPN Connection with APIPA BGP.
 
-Set the config setting manually.
+Set the catalyst config setting manually.
 
 ```mermaid
 graph TB;
