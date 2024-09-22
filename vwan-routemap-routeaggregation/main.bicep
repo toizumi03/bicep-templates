@@ -5,188 +5,6 @@ param vmAdminUsername string
 param vmAdminPassword string
 param enablediagnostics bool
 
-/* ****************************** Virtual Wan ****************************** */
-module virtualwan '../modules/virtualwan.bicep' = {
-  name: 'virtualwan'
-  params:{
-    virtualwanName: 'virtualwan'
-    location: locationSite1
-    allowBranchToBranchTraffic: true
-    allowVnetToVnetTraffic: true
-  }
-}
-
-module virtualhub1 '../modules/virtualhub.bicep' = {
-  name: 'virtualhub1'
-  params:{
-    virtualhubName: 'virtualhub1'
-    location: locationSite1
-    vhubAddressPrefix: '10.100.0.0/24'
-    allowBranchToBranchTraffic: true
-    virtualwanId: virtualwan.outputs.virtualwanId
-  }
-  dependsOn: [
-    virtualwan
-  ]
-}
-
-module hubs2sgateway1 '../modules/vhubs2sgateway.bicep' = {
-  name: 'hubs2sgateway1'
-  params:{
-  hubgatewayName: 'hubs2sgateway1'
-  location: locationSite1
-  hubid: virtualhub1.outputs.virtualhubId
-  vpnGatewayScaleUnit: 2
-  logAnalyticsId: logAnalytics.id
-  enablediagnostics: enablediagnostics
-  }
-}
-
-module virtualhub2 '../modules/virtualhub.bicep' = {
-  name: 'virtualhub2'
-  params:{
-    virtualhubName: 'virtualhub2'
-    location: locationSite1
-    vhubAddressPrefix: '10.100.10.0/24'
-    allowBranchToBranchTraffic: true
-    virtualwanId: virtualwan.outputs.virtualwanId
-  }
-  dependsOn: [
-    virtualwan
-  ]
-}
-
-resource vnet_peering_vhub1 'Microsoft.Network/virtualHubs/hubVirtualNetworkConnections@2023-05-01' = {
-  name: 'virtualhub1/vnetpeeringvhub1'
-  properties: {
-    remoteVirtualNetwork: {
-      id: cloud_vnet1.id
-    }
-  }
-  dependsOn: [
-    virtualhub1
-  ]
-}
-
-resource vnet_peering_vhub2 'Microsoft.Network/virtualHubs/hubVirtualNetworkConnections@2023-05-01' = {
-  name: 'virtualhub1/vnetpeeringvhub2'
-  properties: {
-    remoteVirtualNetwork: {
-      id: cloud_vnet2.id
-    }
-  }
-  dependsOn: [
-    virtualhub1
-  ]
-}
-
-resource vnet_peering_vhub3 'Microsoft.Network/virtualHubs/hubVirtualNetworkConnections@2023-05-01' = {
-  name: 'virtualhub2/vnetpeeringvhub3'
-  properties: {
-    remoteVirtualNetwork: {
-      id: cloud_vnet3.id
-    }
-  }
-  dependsOn: [
-    virtualhub2
-  ]
-}
-
-
-// vhub vpn site
-module vpnsite1 '../modules/vhubvpnsite.bicep' = {
-  name: 'vpnsite1'
-  params:{
-    siteName: 'vpnsite1'
-    location: locationSite1
-    siteAddressPrefix : onpre_vnet1.properties.addressSpace.addressPrefixes[0]
-    bgpasn : 65010
-    bgpPeeringAddress : split(onprevpngateway1.outputs.bgpPeeringAddress, ',')[0]
-    linkSpeedInMbps : 50
-    vpnDeviceIpAddress : onprevpngateway1.outputs.vpnpublicIp
-    wanId : virtualwan.outputs.virtualwanId
-  }
-  dependsOn:[
-    virtualwan
-    virtualhub1
-    onprevpngateway1
-  ]
-}
-
-module vpnsite2 '../modules/vhubvpnsite.bicep' = {
-  name: 'vpnsite2'
-  params:{
-    siteName: 'vpnsite2'
-    location: locationSite1
-    siteAddressPrefix : onpre_vnet2.properties.addressSpace.addressPrefixes[0]
-    bgpasn : 65020
-    bgpPeeringAddress : split(onprevpngateway2.outputs.bgpPeeringAddress, ',')[0]
-    linkSpeedInMbps : 50
-    vpnDeviceIpAddress : onprevpngateway2.outputs.vpnpublicIp
-    wanId : virtualwan.outputs.virtualwanId
-  }
-  dependsOn:[
-    virtualwan
-    virtualhub1
-    onprevpngateway2
-  ]
-}
-
-resource hubvpnsiteConnection1 'Microsoft.Network/vpnGateways/vpnConnections@2023-04-01' = {
-  name: 'hubs2sgateway1/${vpnsite1.name}-connection'
-  properties: {
-    connectionBandwidth: 50
-    enableBgp: true
-    sharedKey: 'sharedpass'
-    remoteVpnSite: {
-      id: vpnsite1.outputs.vpnsiteid
-    }
-  }
-  dependsOn:[
-    hubs2sgateway1
-  ]
-}
-
-resource hubvpnsiteConnection2 'Microsoft.Network/vpnGateways/vpnConnections@2023-04-01' = {
-  name: 'hubs2sgateway1/${vpnsite2.name}-connection'
-  properties: {
-    connectionBandwidth: 50
-    enableBgp: true
-    sharedKey: 'sharedpass'
-    remoteVpnSite: {
-      id: vpnsite2.outputs.vpnsiteid
-    }
-  }
-  dependsOn:[
-    hubs2sgateway1
-    hubvpnsiteConnection1
-  ]
-}
-
-module routemap1 '../modules/routemap.bicep' = {
-  name: 'routemap1'
-  params:{
-    routemapname: 'virtualhub1/routemap1'
-    rulename: 'rule1'
-    matchcriteria_prefix: ['192.168.0.0/15']
-    matchCondition: 'Contains'
-    nextStepIfMatched: 'Continue'
-    associatedInboundConnections: [
-      hubvpnsiteConnection1.id
-      hubvpnsiteConnection2.id
-    ]
-    associatedOutboundConnections: [
-      hubvpnsiteConnection1.id
-      hubvpnsiteConnection2.id
-    ]
-    action_prefix: ['192.168.0.0/15']
-    action_type: 'Replace'
-  }
-  dependsOn:[
-    hubs2sgateway1
-  ]
-}
-
 
 /* ****************************** Cloud-Vnet ****************************** */
 
@@ -201,9 +19,6 @@ module defaultNSGSite1 '../modules/nsg.bicep' = {
 resource cloud_vnet1 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   name: 'cloud-vnet1'
   location: locationSite1
-  tags: {
-    tagName1: 'toizumi_recipes'
-  }
   properties: {
     addressSpace: {
       addressPrefixes: [
@@ -264,6 +79,327 @@ resource cloud_vnet3 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   }
 }
 
+module virtualwan '../modules/virtualwan.bicep' = {
+  name: 'virtualwan'
+  params:{
+    virtualwanName: 'virtualwan'
+    location: locationSite1
+    allowBranchToBranchTraffic: true
+    allowVnetToVnetTraffic: true
+  }
+}
+
+module virtualhub1 '../modules/virtualhub.bicep' = {
+  name: 'virtualhub1'
+  params:{
+    virtualhubName: 'virtualhub1'
+    location: locationSite1
+    vhubAddressPrefix: '10.100.0.0/24'
+    allowBranchToBranchTraffic: true
+    virtualwanId: virtualwan.outputs.virtualwanId
+  }
+  dependsOn: [
+    virtualwan
+  ]
+}
+
+module hubs2sgateway1 '../modules/vhubs2sgateway.bicep' = {
+  name: 'hubs2sgateway1'
+  params:{
+  hubgatewayName: 'hubs2sgateway1'
+  location: locationSite1
+  hubid: virtualhub1.outputs.virtualhubId
+  vpnGatewayScaleUnit: 2
+  logAnalyticsId: logAnalytics.id
+  enablediagnostics: enablediagnostics
+  }
+}
+
+module virtualhub2 '../modules/virtualhub.bicep' = {
+  name: 'virtualhub2'
+  params:{
+    virtualhubName: 'virtualhub2'
+    location: locationSite1
+    vhubAddressPrefix: '10.100.10.0/24'
+    allowBranchToBranchTraffic: true
+    virtualwanId: virtualwan.outputs.virtualwanId
+  }
+  dependsOn: [
+    virtualwan
+  ]
+}
+
+resource vnet_peering_vhub1 'Microsoft.Network/virtualHubs/hubVirtualNetworkConnections@2023-05-01' = {
+  name: 'virtualhub1/vnetpeeringvhub1'
+  properties: {
+    remoteVirtualNetwork: {
+      id: cloud_vnet1.id
+    }
+    enableInternetSecurity: true
+  }
+  dependsOn: [
+    virtualhub1
+    
+  ]
+}
+
+resource vnet_peering_vhub2 'Microsoft.Network/virtualHubs/hubVirtualNetworkConnections@2023-05-01' = {
+  name: 'virtualhub1/vnetpeeringvhub2'
+  properties: {
+    remoteVirtualNetwork: {
+      id: cloud_vnet2.id
+    }
+    enableInternetSecurity: true
+  }
+  dependsOn: [
+    virtualhub1
+    vnet_peering_vhub1
+  ]
+}
+
+resource vnet_peering_vhub3 'Microsoft.Network/virtualHubs/hubVirtualNetworkConnections@2023-05-01' = {
+  name: 'virtualhub2/vnetpeeringvhub3'
+  properties: {
+    remoteVirtualNetwork: {
+      id: cloud_vnet3.id
+    }
+    enableInternetSecurity: true
+  }
+  dependsOn: [
+    virtualhub2
+  ]
+}
+
+//routemap settings
+module routemap1 '../modules/routemap.bicep' = {
+  name: 'routemap1'
+  params:{
+    routemapname: 'virtualhub1/routemap1'
+    rulename: 'rule1'
+    matchcriteria_prefix: ['172.16.0.0/15']
+    matchCondition: 'Contains'
+    nextStepIfMatched: 'Continue'
+    associatedInboundConnections: [
+      hubvpnsiteConnection1.id
+    ]
+    associatedOutboundConnections: [
+      hubvpnsiteConnection1.id
+    ]
+    action_prefix: ['172.16.0.0/15']
+    action_type: 'Replace'
+  }
+  dependsOn:[
+    hubs2sgateway1
+  ]
+}
+
+
+// vhub vpn site1
+resource vpnsite1 'Microsoft.Network/vpnSites@2023-04-01' = {
+  name: 'vpnsite1'
+  location: locationSite1
+  properties: {
+    virtualWan: {
+      id: virtualwan.outputs.virtualwanId
+    }
+    vpnSiteLinks: [
+      {
+        name: 'Link1'
+        properties: {
+          bgpProperties: {
+            asn: 65010
+            bgpPeeringAddress: split(onprevpngateway1.outputs.bgpPeeringAddress, ',')[0]
+          }
+            ipAddress: onprevpngateway1.outputs.publicIp01Address
+            linkProperties: {
+              linkProviderName: 'MS'
+              linkSpeedInMbps: 50
+        }
+      }
+    }
+    {
+      name: 'Link2'
+      properties: {
+        bgpProperties: {
+          asn: 65010
+          bgpPeeringAddress: split(onprevpngateway1.outputs.bgpPeeringAddress, ',')[1]
+        }
+        ipAddress: onprevpngateway1.outputs.publicIp02Address
+        linkProperties: {
+          linkProviderName: 'MS'
+          linkSpeedInMbps: 50
+        }
+      }
+    }
+    ]
+  }
+  dependsOn:[
+    virtualwan
+    virtualhub1
+    onprevpngateway1
+  ]
+}
+
+
+resource hubvpnsiteConnection1 'Microsoft.Network/vpnGateways/vpnConnections@2023-11-01' = {
+  name: 'hubs2sgateway1/${vpnsite1.name}-connection'
+  properties:{
+    remoteVpnSite: {
+      id: vpnsite1.id
+    }
+    vpnLinkConnections: [
+      {
+        id: '${resourceId('Microsoft.Network/vpnGateways/vpnConnections',hubs2sgateway1.name,'vpnsite1-connection')}/vpnLinkConnections/link1'
+        name: 'Link1'
+        properties: {
+          connectionBandwidth: 50
+          dpdTimeoutSeconds: 0
+          enableBgp: true
+          enableRateLimiting: false
+          ipsecPolicies: []
+          routingWeight: 0
+          sharedKey: 'sharedpass'
+          useLocalAzureIpAddress: false
+          usePolicyBasedTrafficSelectors: false
+          vpnConnectionProtocolType: 'IKEv2'
+          vpnGatewayCustomBgpAddresses: []
+          vpnLinkConnectionMode: 'Default'
+          vpnSiteLink: {
+            id: '${resourceId('Microsoft.Network/vpnSites',vpnsite1.name)}/vpnSiteLinks/link1'
+          }
+        }
+      }
+      {
+        id: '${resourceId('Microsoft.Network/vpnGateways/vpnConnections',hubs2sgateway1.name,'vpnsite1-connection')}/vpnLinkConnections/link2'
+        name: 'Link2'
+        properties: {
+          connectionBandwidth: 50
+          dpdTimeoutSeconds: 0
+          enableBgp: true
+          enableRateLimiting: false
+          ipsecPolicies: []
+          routingWeight: 0
+          sharedKey: 'sharedpass'
+          useLocalAzureIpAddress: false
+          usePolicyBasedTrafficSelectors: false
+          vpnConnectionProtocolType: 'IKEv2'
+          vpnGatewayCustomBgpAddresses: []
+          vpnLinkConnectionMode: 'Default'
+          vpnSiteLink: {
+            id: '${resourceId('Microsoft.Network/vpnSites',vpnsite1.name)}/vpnSiteLinks/link2'
+          }
+        }
+      }
+    ]
+  }
+  dependsOn:[
+    hubs2sgateway1
+  ]
+}
+
+// vhub vpn site2
+resource vpnsite2 'Microsoft.Network/vpnSites@2023-04-01' = {
+  name: 'vpnsite2'
+  location: locationSite1
+  properties: {
+    virtualWan: {
+      id: virtualwan.outputs.virtualwanId
+    }
+    vpnSiteLinks: [
+      {
+        name: 'Link1'
+        properties: {
+          bgpProperties: {
+            asn: 65020
+            bgpPeeringAddress: split(onprevpngateway2.outputs.bgpPeeringAddress, ',')[0]
+          }
+            ipAddress: onprevpngateway2.outputs.publicIp01Address
+            linkProperties: {
+              linkProviderName: 'MS'
+              linkSpeedInMbps: 50
+        }
+      }
+    }
+    {
+      name: 'Link2'
+      properties: {
+        bgpProperties: {
+          asn: 65020
+          bgpPeeringAddress: split(onprevpngateway2.outputs.bgpPeeringAddress, ',')[1]
+        }
+        ipAddress: onprevpngateway2.outputs.publicIp02Address
+        linkProperties: {
+          linkProviderName: 'MS'
+          linkSpeedInMbps: 50
+        }
+      }
+    }
+    ]
+  }
+  dependsOn:[
+    virtualwan
+    virtualhub1
+    onprevpngateway2
+  ]
+}
+
+
+resource hubvpnsite2Connection1 'Microsoft.Network/vpnGateways/vpnConnections@2023-11-01' = {
+  name: 'hubs2sgateway1/${vpnsite2.name}-connection'
+  properties:{
+    remoteVpnSite: {
+      id: vpnsite2.id
+    }
+    vpnLinkConnections: [
+      {
+        id: '${resourceId('Microsoft.Network/vpnGateways/vpnConnections',hubs2sgateway1.name,'vpnsite2-connection')}/vpnLinkConnections/link1'
+        name: 'Link1'
+        properties: {
+          connectionBandwidth: 50
+          dpdTimeoutSeconds: 0
+          enableBgp: true
+          enableRateLimiting: false
+          ipsecPolicies: []
+          routingWeight: 0
+          sharedKey: 'sharedpass'
+          useLocalAzureIpAddress: false
+          usePolicyBasedTrafficSelectors: false
+          vpnConnectionProtocolType: 'IKEv2'
+          vpnGatewayCustomBgpAddresses: []
+          vpnLinkConnectionMode: 'Default'
+          vpnSiteLink: {
+            id: '${resourceId('Microsoft.Network/vpnSites',vpnsite2.name)}/vpnSiteLinks/link1'
+          }
+        }
+      }
+      {
+        id: '${resourceId('Microsoft.Network/vpnGateways/vpnConnections',hubs2sgateway1.name,'vpnsite2-connection')}/vpnLinkConnections/link2'
+        name: 'Link2'
+        properties: {
+          connectionBandwidth: 50
+          dpdTimeoutSeconds: 0
+          enableBgp: true
+          enableRateLimiting: false
+          ipsecPolicies: []
+          routingWeight: 0
+          sharedKey: 'sharedpass'
+          useLocalAzureIpAddress: false
+          usePolicyBasedTrafficSelectors: false
+          vpnConnectionProtocolType: 'IKEv2'
+          vpnGatewayCustomBgpAddresses: []
+          vpnLinkConnectionMode: 'Default'
+          vpnSiteLink: {
+            id: '${resourceId('Microsoft.Network/vpnSites',vpnsite2.name)}/vpnSiteLinks/link2'
+          }
+        }
+      }
+    ]
+  }
+  dependsOn:[
+    hubs2sgateway1
+    hubvpnsiteConnection1
+  ]
+}
 
 module cloudvm1 '../modules/ubuntu20.04.bicep' = {
   name: 'cloud-vm1'
@@ -302,7 +438,7 @@ module cloudvm3 '../modules/ubuntu20.04.bicep' = {
 }
 
 
-/* ****************************** Onpre-nsg ****************************** */
+/* ****************************** Onpre-Vnet1 ****************************** */
 
 module defaultNSGSite2 '../modules/nsg.bicep' = {
   name: 'NetworkSecurityGroupSite2'
@@ -311,8 +447,6 @@ module defaultNSGSite2 '../modules/nsg.bicep' = {
     name: 'nsg-site2'  
   }
 }
-
-/* ****************************** Onpre-Vnet1 ****************************** */
 
 resource onpre_vnet1 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   name: 'onpre-vnet1'
@@ -341,12 +475,13 @@ resource onpre_vnet1 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   }
 }
 
-var onprevpngw1Name = 'onpre-vpngw1'
-module onprevpngateway1 '../modules/vpngw_single.bicep' = {
-  name: onprevpngw1Name
+
+var onprevpngwName1 = 'onpre-vpngw1'
+module onprevpngateway1 '../modules/vpngw_act-act.bicep' = {
+  name: onprevpngwName1
   params: {
     location: locationSite2
-    gatewayName: onprevpngw1Name
+    gatewayName: onprevpngwName1
     vnetName: onpre_vnet1.name
     enablePrivateIpAddress: false
     bgpAsn: 65010
@@ -368,9 +503,22 @@ resource lng_cloud1 'Microsoft.Network/localNetworkGateways@2023-04-01' = {
   }
 }
 
+var lng02Name = 'lng-cloud2'
+resource lng_cloud2 'Microsoft.Network/localNetworkGateways@2023-04-01' = {
+  name: lng02Name
+  location: locationSite2
+  properties: {
+    gatewayIpAddress:hubs2sgateway1.outputs.gwpublicip2
+    bgpSettings:{
+      asn: 65515
+      bgpPeeringAddress: hubs2sgateway1.outputs.gwdefaultbgpip2
+    }
+  }
+}
+
 // Connection from Onp to Cloud
-resource connectionOnptoCloud1 'Microsoft.Network/connections@2023-04-01' = {
-  name: 'fromOnptoCloud1'
+resource connectionOnp1toCloud1 'Microsoft.Network/connections@2023-04-01' = {
+  name: 'fromOnp1toCloud1'
   location: locationSite2
   properties: {
     enableBgp: true
@@ -388,10 +536,29 @@ resource connectionOnptoCloud1 'Microsoft.Network/connections@2023-04-01' = {
   }
 }
 
+resource connectionOnp1toCloud2 'Microsoft.Network/connections@2023-04-01' = {
+  name: 'fromOnp1toCloud2'
+  location: locationSite2
+  properties: {
+    enableBgp: true
+    virtualNetworkGateway1: {
+      id: onprevpngateway1.outputs.vpngwId
+      properties:{}
+    }
+    localNetworkGateway2: {
+      id: lng_cloud2.id
+      properties:{}
+    }
+    connectionType: 'IPsec'
+    routingWeight: 0
+    sharedKey: 'sharedpass'
+  }
+}
+
 module onprevm1 '../modules/ubuntu20.04.bicep' = {
   name: 'onpre-vm1'
   params: {
-    vmName: 'onpre-vm'
+    vmName: 'onpre-vm1'
     VMadminUsername: vmAdminUsername
     VMadminpassword: vmAdminPassword
     location: locationSite2
@@ -415,26 +582,26 @@ resource onpre_vnet2 'Microsoft.Network/virtualNetworks@2023-04-01' = {
       {
         name: 'default'
         properties: {
-          addressPrefix: '172.17.1.0/24'
+          addressPrefix: '172.17.0.0/24'
           networkSecurityGroup: { id: defaultNSGSite2.outputs.nsgId }
         }
       }
       {
         name: 'GatewaySubnet'
         properties: {
-          addressPrefix: '172.17.2.0/24'
+          addressPrefix: '172.17.1.0/24'
         }
       }
     ]
   }
 }
 
-var onprevpngw2Name = 'onpre-vpngw2'
-module onprevpngateway2 '../modules/vpngw_single.bicep' = {
-  name: onprevpngw2Name
+var onprevpngwName2 = 'onpre-vpngw2'
+module onprevpngateway2 '../modules/vpngw_act-act.bicep' = {
+  name: onprevpngwName2
   params: {
     location: locationSite2
-    gatewayName: onprevpngw2Name
+    gatewayName: onprevpngwName2
     vnetName: onpre_vnet2.name
     enablePrivateIpAddress: false
     bgpAsn: 65020
@@ -443,9 +610,9 @@ module onprevpngateway2 '../modules/vpngw_single.bicep' = {
   }
 }
 
-var lng02Name = 'lng-cloud2'
-resource lng_cloud2 'Microsoft.Network/localNetworkGateways@2023-04-01' = {
-  name: lng02Name
+var lng03Name = 'lng-cloud3'
+resource lng_cloud3 'Microsoft.Network/localNetworkGateways@2023-04-01' = {
+  name: lng03Name
   location: locationSite2
   properties: {
     gatewayIpAddress: hubs2sgateway1.outputs.gwpublicip1
@@ -456,9 +623,22 @@ resource lng_cloud2 'Microsoft.Network/localNetworkGateways@2023-04-01' = {
   }
 }
 
+var lng04Name = 'lng-cloud4'
+resource lng_cloud4 'Microsoft.Network/localNetworkGateways@2023-04-01' = {
+  name: lng04Name
+  location: locationSite2
+  properties: {
+    gatewayIpAddress:hubs2sgateway1.outputs.gwpublicip2
+    bgpSettings:{
+      asn: 65515
+      bgpPeeringAddress: hubs2sgateway1.outputs.gwdefaultbgpip2
+    }
+  }
+}
 
-resource connectionOnptoCloud2 'Microsoft.Network/connections@2023-04-01' = {
-  name: 'fromOnptoCloud2'
+// Connection from Onp to Cloud
+resource connectionOnp2toCloud1 'Microsoft.Network/connections@2023-04-01' = {
+  name: 'fromOnp2toCloud1'
   location: locationSite2
   properties: {
     enableBgp: true
@@ -467,7 +647,26 @@ resource connectionOnptoCloud2 'Microsoft.Network/connections@2023-04-01' = {
       properties:{}
     }
     localNetworkGateway2: {
-      id: lng_cloud2.id
+      id: lng_cloud3.id
+      properties:{}
+    }
+    connectionType: 'IPsec'
+    routingWeight: 0
+    sharedKey: 'sharedpass'
+  }
+}
+
+resource connectionOnp2toCloud2 'Microsoft.Network/connections@2023-04-01' = {
+  name: 'fromOnp2toCloud2'
+  location: locationSite2
+  properties: {
+    enableBgp: true
+    virtualNetworkGateway1: {
+      id: onprevpngateway2.outputs.vpngwId
+      properties:{}
+    }
+    localNetworkGateway2: {
+      id: lng_cloud4.id
       properties:{}
     }
     connectionType: 'IPsec'
