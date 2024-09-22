@@ -185,7 +185,7 @@ module routemap1 '../modules/routemap.bicep' = {
     associatedOutboundConnections: [
       hubvpnsiteConnection1.id
     ]
-    action_prefix: ['172.16.0.0/15']
+    action_prefix: ['172.16.00.0/15']
     action_type: 'Replace'
   }
   dependsOn:[
