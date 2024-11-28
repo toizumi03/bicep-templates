@@ -7,37 +7,37 @@ param vmAdminPassword string
   true
   false
 ])
-param Azlog bool
+param createLoganalytics bool
 @allowed([
   true
   false
 ])
-param Azser bool
+param createAisearch bool
 @allowed([
   true
   false
 ])
-param Azcosdb bool
+param createCosmosdb bool
 @allowed([
   true
   false
 ])
-param Azevhub bool
+param createEventhubs bool
 @allowed([
   true
   false
 ])
-param Azkey bool
+param createKeyvault bool
 @allowed([
   true
   false
 ])
-param Azsqldb bool
+param createSqldb bool
 @allowed([
   true
   false
 ])
-param Azst bool
+param createStoragaccount bool
 
 /* ****************************** Network Security Perimeter ****************************** */
 
@@ -104,7 +104,7 @@ resource accuessrules 'Microsoft.Network/networkSecurityPerimeters/profiles/acce
   }
 }
 
-resource resourceAssociations1 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(Azlog) {
+resource resourceAssociations1 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(createLoganalytics) {
   parent: perimeter
   location: locationSite1
   name: 'associatedResource1'
@@ -119,7 +119,7 @@ resource resourceAssociations1 'Microsoft.Network/networkSecurityPerimeters/reso
   }
 }
 
-resource resourceAssociations2 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(Azser) {
+resource resourceAssociations2 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(createAisearch) {
   parent: perimeter
   location: locationSite1
   name: 'associatedResource2'
@@ -134,7 +134,7 @@ resource resourceAssociations2 'Microsoft.Network/networkSecurityPerimeters/reso
   }
 }
 
-resource resourceAssociations3 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(Azcosdb) {
+resource resourceAssociations3 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(createCosmosdb) {
   parent: perimeter
   location: locationSite1
   name: 'associatedResource3'
@@ -149,7 +149,7 @@ resource resourceAssociations3 'Microsoft.Network/networkSecurityPerimeters/reso
   }
 }
 
-resource resourceAssociations4 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(Azevhub) {
+resource resourceAssociations4 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(createEventhubs) {
   parent: perimeter
   location: locationSite1
   name: 'associatedResource4'
@@ -164,7 +164,7 @@ resource resourceAssociations4 'Microsoft.Network/networkSecurityPerimeters/reso
   }
 }
 
-resource resourceAssociations5 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(Azkey) {
+resource resourceAssociations5 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(createKeyvault) {
   parent: perimeter
   location: locationSite1
   name: 'associatedResource5'
@@ -179,7 +179,7 @@ resource resourceAssociations5 'Microsoft.Network/networkSecurityPerimeters/reso
   }
 }
 
-resource resourceAssociations6 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(Azsqldb) {
+resource resourceAssociations6 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(createSqldb) {
   parent: perimeter
   location: locationSite1
   name: 'associatedResource6'
@@ -194,7 +194,7 @@ resource resourceAssociations6 'Microsoft.Network/networkSecurityPerimeters/reso
   }
 }
 
-resource resourceAssociations7 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(Azst) {
+resource resourceAssociations7 'Microsoft.Network/networkSecurityPerimeters/resourceAssociations@2023-08-01-preview' = if(createStoragaccount) {
   parent: perimeter
   location: locationSite1
   name: 'associatedResource7'
@@ -212,7 +212,7 @@ resource resourceAssociations7 'Microsoft.Network/networkSecurityPerimeters/reso
 /* ****************************** LogAnalytics Workspace ****************************** */
 var logAnalyticsWorkspace  = 'logana-${uniqueString(resourceGroup().id)}la'
 
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01'= if(Azlog) {
+resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01'= if(createLoganalytics) {
   name: logAnalyticsWorkspace
   location: locationSite1
 }
@@ -220,7 +220,7 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2023-09-01'= if(
 /* ****************************** Azure AI Search	 ****************************** */
 var searchServiceName = 'search-${uniqueString(resourceGroup().id)}'
 
-resource search 'Microsoft.Search/searchServices@2020-08-01' = if(Azser) {
+resource search 'Microsoft.Search/searchServices@2020-08-01' = if(createAisearch) {
   name: searchServiceName
   location: locationSite1
   sku: {
@@ -242,7 +242,7 @@ var databaseName = 'cosmos-${uniqueString(resourceGroup().id)}'
 @description('The name for the SQL API container')
 var containerName = 'cosmos-${uniqueString(resourceGroup().id)}'
 
-resource cosmosdbaccount 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = if(Azcosdb) {
+resource cosmosdbaccount 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = if(createCosmosdb) {
   name: toLower(accountName)
   location: locationSite1
   properties: {
@@ -259,7 +259,7 @@ resource cosmosdbaccount 'Microsoft.DocumentDB/databaseAccounts@2023-11-15' = if
   }
 }
 
-resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-11-15' =  if(Azcosdb) {
+resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-11-15' =  if(createCosmosdb) {
   parent: cosmosdbaccount
   name: databaseName
   properties: {
@@ -272,7 +272,7 @@ resource database 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2023-11-15
   }
 }
 
-resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-11-15' =  if(Azcosdb) {
+resource container 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2023-11-15' =  if(createCosmosdb) {
   parent: database
   name: containerName
   properties: {
@@ -307,7 +307,7 @@ var projectName = 'project-${uniqueString(resourceGroup().id)}'
 var eventHubNamespaceName = '${projectName}ns'
 var eventHubName = projectName
 
-resource eventHubNamespace 'Microsoft.EventHub/namespaces@2024-01-01' = if(Azevhub) {
+resource eventHubNamespace 'Microsoft.EventHub/namespaces@2024-01-01' = if(createEventhubs) {
   name: eventHubNamespaceName
   location: locationSite1
   sku: {
@@ -321,7 +321,7 @@ resource eventHubNamespace 'Microsoft.EventHub/namespaces@2024-01-01' = if(Azevh
   }
 }
 
-resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = if(Azevhub) {
+resource eventHub 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = if(createEventhubs) {
   parent: eventHubNamespace
   name: eventHubName
   properties: {
@@ -339,7 +339,7 @@ var keyOps  = []
 var keySize = 2048
 var curveName = 'P-256'
 
-resource keyvault 'Microsoft.KeyVault/vaults@2023-07-01' = if(Azkey) {
+resource keyvault 'Microsoft.KeyVault/vaults@2023-07-01' = if(createKeyvault) {
   name: vaultName
   location: locationSite1
   properties: {
@@ -362,7 +362,7 @@ resource keyvault 'Microsoft.KeyVault/vaults@2023-07-01' = if(Azkey) {
   }
 }
 
-resource key 'Microsoft.KeyVault/vaults/keys@2023-07-01' = if(Azkey){
+resource key 'Microsoft.KeyVault/vaults/keys@2023-07-01' = if(createKeyvault){
   parent: keyvault
   name: keyName
   properties: {
@@ -378,7 +378,7 @@ resource key 'Microsoft.KeyVault/vaults/keys@2023-07-01' = if(Azkey){
 var serverName = uniqueString('sql', resourceGroup().id)
 var sqlDBName = 'SampleDB'
 
-resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = if(Azsqldb) {
+resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = if(createSqldb) {
   name: serverName
   location: locationSite1
   properties: {
@@ -387,7 +387,7 @@ resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = if(Azsqldb) {
   }
 }
 
-resource sqlDB 'Microsoft.Sql/servers/databases@2023-05-01-preview' = if(Azsqldb){
+resource sqlDB 'Microsoft.Sql/servers/databases@2023-05-01-preview' = if(createSqldb){
   parent: sqlServer
   name: sqlDBName
   location: locationSite1
@@ -400,7 +400,7 @@ resource sqlDB 'Microsoft.Sql/servers/databases@2023-05-01-preview' = if(Azsqldb
 /* ****************************** Storage ****************************** */
 var storageAccountName = 'storage${uniqueString(resourceGroup().id)}'
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = if(Azst) {
+resource storageAccount 'Microsoft.Storage/storageAccounts@2023-01-01' = if(createStoragaccount) {
   name: storageAccountName
   location: locationSite1
   sku: {
