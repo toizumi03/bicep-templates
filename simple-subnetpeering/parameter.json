@@ -5,9 +5,6 @@
         "locationSite1": {
             "value": "japaneast"
         },
-        "locationSite2": {
-            "value": "japanwest"
-        },
         "vmAdminUsername": {
             "value": "vmAdminPassword"
         },
