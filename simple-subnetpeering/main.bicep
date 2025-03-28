@@ -20,6 +20,7 @@ resource cloud_vnet1 'Microsoft.Network/virtualNetworks@2023-04-01' = {
     addressSpace: {
       addressPrefixes: [
         '10.0.0.0/16'
+        '172.16.0.0/16'
       ]
     }
     subnets: [
@@ -34,6 +35,12 @@ resource cloud_vnet1 'Microsoft.Network/virtualNetworks@2023-04-01' = {
         name: 'subnet-2'
         properties: {
           addressPrefix: '10.0.1.0/24'
+        }
+      }
+      {
+        name: 'subnet-3'
+        properties: {
+          addressPrefix: '172.16.0.0/16'
         }
       }
     ]
@@ -64,6 +71,18 @@ module cloudvm2 '../modules/ubuntu20.04.bicep' = {
   }
 }
 
+module cloudvm3 '../modules/ubuntu20.04.bicep' = {
+  name: 'cloud-vm3'
+  params: {
+    vmName: 'cloud-vm3'
+    VMadminUsername: vmAdminUsername
+    VMadminpassword: vmAdminPassword
+    location: locationSite1
+    usePublicIP: true
+    subnetId: cloud_vnet1.properties.subnets[2].id
+  }
+}
+
 resource spoke_peer 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2024-05-01' = {
   parent: cloud_vnet1
   name: 'vnet1tovnet2'
@@ -80,8 +99,8 @@ resource spoke_peer 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
       'subnet-2'
     ]
     remoteSubnetNames: [
-      'subnet-3'
       'subnet-4'
+      'subnet-5'
     ]
   }
 }
@@ -94,43 +113,32 @@ resource cloud_vnet2 'Microsoft.Network/virtualNetworks@2023-04-01' = {
     addressSpace: {
       addressPrefixes: [
         '10.100.0.0/16'
+        '172.16.0.0/16'
       ]
     }
     subnets: [
       {
-        name: 'subnet-3'
+        name: 'subnet-4'
         properties: {
           addressPrefix: '10.100.0.0/24'
           networkSecurityGroup: { id: defaultNSGSite1.outputs.nsgId }
         }
       }
       {
-        name: 'subnet-4'
+        name: 'subnet-5'
         properties: {
           addressPrefix: '10.100.1.0/24'
           networkSecurityGroup: { id: defaultNSGSite1.outputs.nsgId }
         }
       }
       {
-        name: 'subnet-5'
+        name: 'subnet-6'
         properties: {
-          addressPrefix: '10.100.2.0/24'
+          addressPrefix: '172.16.0.0/16'
           networkSecurityGroup: { id: defaultNSGSite1.outputs.nsgId }
         }
       }
     ]
-  }
-}
-
-module cloudvm3 '../modules/ubuntu20.04.bicep' = {
-  name: 'cloud-vm3'
-  params: {
-    vmName: 'cloud-vm3'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
-    location: locationSite1
-    usePublicIP: true
-    subnetId: cloud_vnet2.properties.subnets[0].id
   }
 }
 
@@ -142,7 +150,7 @@ module cloudvm4 '../modules/ubuntu20.04.bicep' = {
     VMadminpassword: vmAdminPassword
     location: locationSite1
     usePublicIP: true
-    subnetId: cloud_vnet2.properties.subnets[1].id
+    subnetId: cloud_vnet2.properties.subnets[0].id
   }
 }
 
@@ -150,6 +158,18 @@ module cloudvm5 '../modules/ubuntu20.04.bicep' = {
   name: 'cloud-vm5'
   params: {
     vmName: 'cloud-vm5'
+    VMadminUsername: vmAdminUsername
+    VMadminpassword: vmAdminPassword
+    location: locationSite1
+    usePublicIP: true
+    subnetId: cloud_vnet2.properties.subnets[1].id
+  }
+}
+
+module cloudvm6 '../modules/ubuntu20.04.bicep' = {
+  name: 'cloud-vm6'
+  params: {
+    vmName: 'cloud-vm6'
     VMadminUsername: vmAdminUsername
     VMadminpassword: vmAdminPassword
     location: locationSite1
@@ -170,8 +190,8 @@ resource cloud_peer 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
     useRemoteGateways: false
     peerCompleteVnets: false
     localSubnetNames: [
-      'subnet-3'
       'subnet-4'
+      'subnet-5'
     ]
     remoteSubnetNames: [
       'subnet-1'
@@ -179,4 +199,3 @@ resource cloud_peer 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
     ]
   }
 }
-
