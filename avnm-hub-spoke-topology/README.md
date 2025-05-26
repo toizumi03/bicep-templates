@@ -64,18 +64,6 @@ class VPNGW1,VPNGW2 SVPNGW
 - Automatically provisions the necessary identity and permissions for deployment
 - Configures peering between the hub and spoke networks with remote gateway transit option
 
-## Implementation details
-
-- Uses Bicep modules for modular and reusable deployment
-- Creates a hub VNet with default subnet (10.0.0.0/24)
-- Deploys multiple spoke VNets using a for loop with dynamic addressing (10.{i}.0.0/16)
-- Provisions Ubuntu 20.04 VMs in each network with public IPs for accessibility
-- Implements Azure Virtual Network Manager to centralize network governance
-- Establishes network groups in AVNM to organize virtual networks
-- Configures hub-spoke connectivity through AVNM's connectivity configuration
-- Uses deployment scripts with managed identity to apply network configurations
-- Assigns Contributor role to the deployment identity for network management operations
-
 ## Usage
 
 ### Prerequisites
