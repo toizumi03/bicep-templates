@@ -46,6 +46,13 @@ Hub and Spoke configuration using Azure Virtual Network Manager.
    az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
    ```
 
+   Or deploy using PowerShell:
+   ```powershell
+   Connect-AzAccount
+   New-AzResourceGroup -Name <your-resource-group> -Location <location>
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
+   ```
+
 5. Verify the deployment in the Azure Portal by checking:
    - Virtual networks and peering connections
    - Virtual network manager configuration
