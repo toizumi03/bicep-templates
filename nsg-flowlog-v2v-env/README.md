@@ -24,9 +24,6 @@ end
 
 %% Relation for resources
 GV1 --Vnet Peering--- GV2
-GVS1 --- LogAnalytics
-GVS3 --- LogAnalytics
-LogAnalytics --- Storage
 
 %% Groups style
 classDef GSR fill:#fff,color:#1490df,stroke:#1490df
