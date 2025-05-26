@@ -1,4 +1,5 @@
-Hub and Spoke configuration with VPN Gateway.
+## Architecture
+Hub and Spoke configuration with VPN Gateway. This architecture provides a central hub virtual network that connects to on-premises networks via VPN Gateway, with multiple spoke virtual networks connected to the hub.
 
 ```mermaid
 graph TB;
@@ -57,3 +58,55 @@ classDef SVPNGW fill:#57d1ed,color:#000,stroke:none
 class VPNGW1,VPNGW2 SVPNGW
 
 ```
+
+## Features of the template
+
+- Implements a Hub and Spoke network topology with VPN Gateway connectivity
+- Creates a hub virtual network with a VPN Gateway for connecting to on-premises networks
+- Deploys two spoke virtual networks peered to the hub network
+- Configures VNet peering to allow gateway transit from hub to spokes
+- Enables remote gateway usage for spoke networks
+- Connects two Azure regions (JapanEast and JapanWest) via site-to-site VPN
+- Deploys Ubuntu 20.04 virtual machines in each network for connectivity testing
+- Applies network security groups to protect the virtual networks
+- Configures BGP routing between VPN gateways with different ASNs
+
+## Usage
+
+### Prerequisites
+- Azure subscription
+- Resource group created in a supported region
+- Contributor access to the resource group
+- Azure CLI or PowerShell installed for deployment
+
+### Deployment
+
+1. Clone the repository containing the Bicep templates
+2. Navigate to the hub-spoke-env directory
+3. Update the parameter.json file with your own values:
+   - locationSite1: Azure region for hub and spokes (default: japaneast)
+   - locationSite2: Azure region for simulated on-premises (default: japanwest)
+   - vmAdminUsername: Username for the VMs
+   - vmAdminPassword: Password for the VMs
+
+4. Deploy using Azure CLI:
+   ```bash
+   az login
+   az group create --name <your-resource-group> --location <location>
+   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
+   ```
+
+   Or deploy using PowerShell:
+   ```powershell
+   Connect-AzAccount
+   New-AzResourceGroup -Name <your-resource-group> -Location <location>
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
+   ```
+
+5. Verify the deployment in the Azure Portal by checking:
+   - The hub virtual network with VPN Gateway in JapanEast
+   - The two spoke virtual networks connected to the hub
+   - The simulated on-premises network with VPN Gateway in JapanWest
+   - VNet peering configurations between hub and spoke networks
+   - VPN connection between the two regions
+   - The virtual machines in each network
