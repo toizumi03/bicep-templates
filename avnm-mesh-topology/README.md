@@ -65,17 +65,6 @@ class VPNGW1,VPNGW2 SVPNGW
 - Automatically provisions the necessary identity and permissions for deployment
 - Configures direct peering between all virtual networks in the mesh
 
-## Implementation details
-
-- Uses Bicep modules for modular and reusable deployment
-- Deploys multiple VNets using a for loop with dynamic addressing (10.{i}.0.0/16)
-- Provisions Ubuntu 20.04 VMs in each network with public IPs for accessibility
-- Implements Azure Virtual Network Manager to centralize network governance
-- Creates network groups in AVNM to organize virtual networks
-- Configures mesh connectivity topology through AVNM's connectivity configuration
-- Uses deployment scripts with managed identity to apply network configurations
-- Assigns Contributor role to the deployment identity for network management operations
-
 ## Usage
 
 ### Prerequisites
