@@ -1,4 +1,5 @@
-ExpressRoute gateway and VPN gateway transit configuration.
+## Architecture
+ExpressRoute gateway and VPN gateway transit configuration with Azure Route Server for dynamic route exchange.
 
 ```mermaid
 graph TB;
@@ -57,3 +58,52 @@ classDef SLNGW fill:#70b126,color:#fff,stroke:none
 class LNGW1,LNGW2 SLNGW
 
 ```
+
+## Features of the template
+
+- Creates a hybrid network architecture with VPN Gateway and ExpressRoute Gateway in the same VNet
+- Deploys Azure Route Server to enable dynamic route exchange between gateways
+- Sets up a VNet-to-VNet VPN connection between two Azure regions (simulating on-premises connectivity)
+- Configures BGP for route exchange between VPN Gateway and Azure Route Server
+- Creates both Ubuntu and Windows VMs in each VNet for connectivity testing
+- Enables diagnostic logging via Log Analytics (optional)
+- All resources are deployed with appropriate subnet configurations and security groups
+
+## Usage
+
+### Prerequisites
+- Azure subscription
+- Resource group created in supported regions (JapanEast and JapanWest by default)
+- Contributor access to the resource group
+- Azure CLI or PowerShell installed for deployment
+
+### Deployment
+
+1. Clone the repository containing the Bicep templates
+2. Navigate to the er-vpn-transit-env directory
+3. Update the parameter.json file with your own values:
+   - locationSite1: Azure region for cloud VNet (default: japaneast)
+   - locationSite2: Azure region for on-premises simulated VNet (default: japanwest)
+   - vmAdminUsername: Username for the VMs
+   - vmAdminPassword: Password for the VMs
+   - enablediagnostics: Set to true to enable diagnostic logging (default: false)
+
+4. Deploy using Azure CLI:
+   ```bash
+   az login
+   az group create --name <your-resource-group> --location <location>
+   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
+   ```
+
+   Or deploy using PowerShell:
+   ```powershell
+   Connect-AzAccount
+   New-AzResourceGroup -Name <your-resource-group> -Location <location>
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
+   ```
+
+5. Verify the deployment in the Azure Portal by checking:
+   - The VPN Gateway connections between regions
+   - Azure Route Server configuration and peering
+   - ExpressRoute Gateway setup
+   - VM connectivity between the VNets
