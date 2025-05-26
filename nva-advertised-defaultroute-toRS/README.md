@@ -1,4 +1,5 @@
-Configuring the NVA to advertise the default route to the RouteServer.
+## Architecture
+Configuring the NVA to advertise the default route to the Azure Route Server.
 
 ```mermaid
 graph TB;
@@ -58,5 +59,53 @@ class RS SRS
 
 classDef SLNGW fill:#70b126,color:#fff,stroke:none
 class LNGW1,LNGW2 SLNGW
-
 ```
+
+## Features of the template
+
+- Deploys a Network Virtual Appliance (NVA) with FRRouting (FRR) configured
+- Sets up an Azure Route Server for BGP peering with the NVA
+- Configures the NVA to advertise default routes (0.0.0.0/1 and 128.0.0.0/1) to the Route Server
+- Creates VPN gateways in Active-Active configuration for site-to-site connectivity
+- Establishes VNet-to-VNet connections between cloud and on-premises environments
+- Deploys sample VMs in both environments for connectivity testing
+- Enables IP forwarding on the NVA for traffic routing
+
+## Usage
+
+### Prerequisites
+- Azure subscription
+- Resource group created in supported regions (japaneast and japanwest)
+- Contributor access to the resource group
+- Azure CLI or PowerShell installed for deployment
+
+### Deployment
+
+1. Clone the repository containing the Bicep templates
+2. Navigate to the nva-advertised-defaultroute-toRS directory
+3. Update the parameter.json file with your own values:
+   - locationSite1: Azure region for cloud environment (default: japaneast)
+   - locationSite2: Azure region for on-premise environment (default: japanwest)
+   - vmAdminUsername: Username for the VMs
+   - vmAdminPassword: Password for the VMs
+   - enablediagnostics: Whether to enable diagnostic logs (default: false)
+
+4. Deploy using Azure CLI:
+   ```bash
+   az login
+   az group create --name <your-resource-group> --location japaneast
+   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
+   ```
+
+   Or deploy using PowerShell:
+   ```powershell
+   Connect-AzAccount
+   New-AzResourceGroup -Name <your-resource-group> -Location japaneast
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
+   ```
+
+5. Verify the deployment in the Azure Portal by checking:
+   - The NVA configuration with FRRouting
+   - Route Server BGP peering with the NVA
+   - VPN gateway connections between cloud and on-premises environments
+   - Default route advertisement from NVA to Route Server
