@@ -1,4 +1,5 @@
-Force Tunneling S2S VPN configuration.
+## Architecture
+Site-to-Site VPN connection with Force Tunneling configuration between two Azure regions.
 
 ```mermaid
 graph TB;
@@ -50,3 +51,53 @@ classDef SLNGW fill:#70b126,color:#fff,stroke:none
 class LNGW1,LNGW2 SLNGW
 
 ```
+
+## Features of the template
+
+- Establishes a Site-to-Site VPN connection between two Azure regions (JapanEast and JapanWest)
+- Configures Force Tunneling using Gateway Default Site settings
+- Deploys VPN Gateways in both regions with VpnGw1 SKU
+- Creates Local Network Gateways to represent the remote networks
+- Sets up virtual networks with appropriate address spaces and subnets
+- Deploys virtual machines in each region for connectivity testing
+- Optionally enables diagnostics for monitoring VPN connections
+
+## Usage
+
+### Prerequisites
+- Azure subscription
+- Resource group created in supported regions (JapanEast and JapanWest)
+- Contributor access to the resource group
+- Azure CLI or PowerShell installed for deployment
+
+### Deployment
+
+1. Clone the repository containing the Bicep templates
+2. Navigate to the s2s-vpn-using-lngw-forcetuneling directory
+3. Update the parameter.json file with your own values:
+   - locationSite1: Primary Azure region for deployment (default: japaneast)
+   - locationSite2: Secondary Azure region for deployment (default: japanwest)
+   - vmAdminUsername: Username for the VMs
+   - vmAdminPassword: Password for the VMs
+   - enablediagnostics: Set to true to enable diagnostic settings (default: false)
+
+4. Deploy using Azure CLI:
+   ```bash
+   az login
+   az group create --name <your-resource-group> --location <location>
+   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
+   ```
+
+   Or deploy using PowerShell:
+   ```powershell
+   Connect-AzAccount
+   New-AzResourceGroup -Name <your-resource-group> -Location <location>
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
+   ```
+
+5. Verify the deployment in the Azure Portal by checking:
+   - The VPN Gateways in both regions
+   - Local Network Gateway configurations
+   - IPsec VPN connections between gateways
+   - Force Tunneling configuration via Gateway Default Site
+   - Virtual machines in both networks for connectivity testing
