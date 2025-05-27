@@ -1,3 +1,4 @@
+## Architecture
 Configuring access to a VM with Apache installed via internal ALB.
 
 ```mermaid
@@ -5,7 +6,7 @@ graph TB;
 %% Groups and Services
 subgraph GR1[Azure JapanEast]
   subgraph GV1[cloud_vnet:10.0.0.0/16]
-      subgraph GVS2[defalut:10.0.1.0/24]
+      subgraph GVS2[default:10.0.1.0/24]
         CP1("VM<br/>Name:client-vm")
         ALB{{"Azure Load Balancer<br/>Name:internal-LB<br/>SKU:Standard<br/>frontendip:10.0.0.100<br/>balancingRules_frontendPort:80<br/>balancingRules_backendPort:80<br/>balancingRules_protocol:TCP<br/>ProbeRules_protocol:TCP<br/>ProbeRules_port:80<br/>ProbeRules_interval:5"}}
         CP2("VM<br/>Name:backend-vm1<br/>Option:installed Apache")
@@ -40,3 +41,50 @@ classDef SLNGW fill:#70b126,color:#fff,stroke:none
 class LNGW1,LNGW2 SLNGW
 
 ```
+
+## Features of the template
+
+- Deploys a Standard SKU internal Azure Load Balancer with private frontend IP (10.0.0.100)
+- Creates 2 backend virtual machines with Apache web server installed
+- Configures TCP load balancing rules for port 80
+- Sets up health probe to monitor backend server availability
+- Creates a client VM for testing the load balancer from within the VNet
+- All resources are deployed in a single virtual network with appropriate subnet
+- Uses Standard SKU for enhanced reliability and zone redundancy capabilities
+
+## Usage
+
+### Prerequisites
+- Azure subscription
+- Resource group created in a supported region
+- Contributor access to the resource group
+- Azure CLI or PowerShell installed for deployment
+
+### Deployment
+
+1. Clone the repository containing the Bicep templates
+2. Navigate to the standard-internal-lb-apache directory
+3. Update the parameter.json file with your own values:
+   - location: Azure region for deployment (default: japaneast)
+   - vmAdminUsername: Username for the VMs
+   - vmAdminPassword: Password for the VMs
+
+4. Deploy using Azure CLI:
+   ```bash
+   az login
+   az group create --name <your-resource-group> --location <location>
+   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
+   ```
+
+   Or deploy using PowerShell:
+   ```powershell
+   Connect-AzAccount
+   New-AzResourceGroup -Name <your-resource-group> -Location <location>
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
+   ```
+
+5. Verify the deployment in the Azure Portal by checking:
+   - The internal load balancer configuration
+   - Backend pool with the two Apache VMs
+   - Health probe settings
+   - Load balancing rules
