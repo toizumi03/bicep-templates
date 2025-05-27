@@ -1,4 +1,5 @@
-S2S VPN configuration using Local Network Gateway.
+## Architecture
+Site-to-Site VPN configuration using Local Network Gateway without BGP.
 
 ```mermaid
 graph TB;
@@ -50,3 +51,52 @@ classDef SLNGW fill:#70b126,color:#fff,stroke:none
 class LNGW1,LNGW2 SLNGW
 
 ```
+
+## Features of the template
+
+- Deploys a basic site-to-site VPN connection between two virtual networks without BGP routing
+- Creates two virtual networks in different Azure regions (JapanEast and JapanWest)
+- Sets up VPN gateways in both virtual networks (SKU: VpnGw1)
+- Configures Local Network Gateways for cross-region connectivity
+- Provisions virtual machines in both networks for testing connectivity
+- Establishes IPSec connection between the VPN gateways
+- Option to enable diagnostic settings for monitoring
+
+## Usage
+
+### Prerequisites
+- Azure subscription
+- Resource group created in supported regions (JapanEast and JapanWest)
+- Contributor access to the resource group
+- Azure CLI or PowerShell installed for deployment
+
+### Deployment
+
+1. Clone the repository containing the Bicep templates
+2. Navigate to the s2s-single-vpn-nobgp-using-lngw directory
+3. Update the parameter.json file with your own values:
+   - locationSite1: Azure region for cloud network (default: japaneast)
+   - locationSite2: Azure region for on-premises simulation (default: japanwest)
+   - vmAdminUsername: Username for the VMs
+   - vmAdminPassword: Password for the VMs
+   - enablediagnostics: Set to true to enable diagnostic logs
+
+4. Deploy using Azure CLI:
+   ```bash
+   az login
+   az group create --name <your-resource-group> --location <location>
+   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
+   ```
+
+   Or deploy using PowerShell:
+   ```powershell
+   Connect-AzAccount
+   New-AzResourceGroup -Name <your-resource-group> -Location <location>
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
+   ```
+
+5. Verify the deployment in the Azure Portal by checking:
+   - The VPN Gateway status and connections
+   - Local Network Gateway configurations
+   - Virtual network connectivity
+   - VM connectivity between the networks
