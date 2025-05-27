@@ -1,3 +1,4 @@
+## Architecture
 Configuration with S2S VPN connection between Virtual WAN and Vnet.
 
 ```mermaid
@@ -80,3 +81,54 @@ classDef SLNGW fill:#70b126,color:#fff,stroke:none
 class LNGW1,LNGW2 SLNGW
 
 ```
+
+## Features of the template
+
+- Deploys a Virtual WAN architecture with two hub instances in different regions
+- Creates S2S VPN connections between Virtual WAN and on-premises networks
+- Configures multiple virtual networks in different regions
+- Sets up hub-to-hub connections for cross-region connectivity
+- Implements IPSec VPN connections with redundancy (dual connection setup)
+- Deploys virtual machines in each network for connectivity testing
+- Applies network security groups to protect virtual networks
+- Creates Local Network Gateway configurations for on-premises connectivity
+
+## Usage
+
+### Prerequisites
+- Azure subscription
+- Resource group created in supported regions (JapanEast and JapanWest)
+- Contributor access to the resource group
+- Azure CLI or PowerShell installed for deployment
+
+### Deployment
+
+1. Clone the repository containing the Bicep templates
+2. Navigate to the vwan-s2s-scenario2 directory
+3. Update the parameter.json file with your own values:
+   - locationSite1: Azure region for first site (default: japaneast)
+   - locationSite2: Azure region for second site (default: japanwest)
+   - vmAdminUsername: Username for the VMs
+   - vmAdminPassword: Password for the VMs
+   - enablediagnostics: Whether to enable diagnostics (true/false)
+
+4. Deploy using Azure CLI:
+   ```bash
+   az login
+   az group create --name <your-resource-group> --location <location>
+   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
+   ```
+
+   Or deploy using PowerShell:
+   ```powershell
+   Connect-AzAccount
+   New-AzResourceGroup -Name <your-resource-group> -Location <location>
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
+   ```
+
+5. Verify the deployment in the Azure Portal by checking:
+   - The Virtual WAN and its hubs in both regions
+   - The VPN gateways and their connections
+   - The virtual networks and their connectivity to the hubs
+   - The virtual machines in each network
+   - The Local Network Gateway configurations
