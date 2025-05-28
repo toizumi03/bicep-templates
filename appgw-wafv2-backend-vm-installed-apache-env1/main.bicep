@@ -68,9 +68,6 @@ module appgwwafv2 '../modules/applicationgateway.bicep' ={
     wafPolicyId: wafPolicy.outputs.policyId
     logAnalyticsID: logAnalytics.id
   }
-  dependsOn: [
-    wafPolicy
-  ]
 }
 
 /* ****************************** WAF Policy ****************************** */
