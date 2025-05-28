@@ -1,3 +1,4 @@
+## Architecture
 Configuration with S2S VPN connection between Virtual WAN and Vnet.
 
 ```mermaid
@@ -69,3 +70,55 @@ classDef SLNGW fill:#70b126,color:#fff,stroke:none
 class LNGW1,LNGW2 SLNGW
 
 ```
+
+## Features of the template
+
+- Deploys a Virtual WAN with two virtual hubs in different regions
+- Creates a Site-to-Site (S2S) VPN gateway in the virtual hub
+- Establishes hub-to-hub connections between virtual hubs
+- Deploys three cloud virtual networks in the primary region
+- Creates VNet connections from cloud networks to virtual hubs
+- Sets up an on-premises network simulation with a VPN gateway
+- Configures IPSec VPN connectivity between on-premises and Virtual WAN
+- Deploys virtual machines in each network for connectivity testing
+- Creates local network gateways for the VPN connections
+
+## Usage
+
+### Prerequisites
+- Azure subscription
+- Resource group created in supported regions (JapanEast and JapanWest)
+- Contributor access to the resource group
+- Azure CLI or PowerShell installed for deployment
+
+### Deployment
+
+1. Clone the repository containing the Bicep templates
+2. Navigate to the vwan-s2s-scenario1 directory
+3. Update the parameter.json file with your own values:
+   - locationSite1: Primary Azure region for deployment (default: japaneast)
+   - locationSite2: Secondary Azure region for deployment (default: japanwest)
+   - vmAdminUsername: Username for the VMs
+   - vmAdminPassword: Password for the VMs
+   - enablediagnostics: Set to true/false to enable or disable diagnostics
+
+4. Deploy using Azure CLI:
+   ```bash
+   az login
+   az group create --name <your-resource-group> --location <location>
+   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
+   ```
+
+   Or deploy using PowerShell:
+   ```powershell
+   Connect-AzAccount
+   New-AzResourceGroup -Name <your-resource-group> -Location <location>
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
+   ```
+
+5. Verify the deployment in the Azure Portal by checking:
+   - The Virtual WAN and virtual hubs configuration
+   - The VPN gateway in the virtual hub
+   - The VNet connections to the virtual hubs
+   - The IPSec VPN connection between the on-premises VPN gateway and the virtual hub
+   - The virtual machines in each network
