@@ -68,7 +68,7 @@ class APPGW SVPAPPGW
    
 2. Navigate to the directory:
    ```
-   cd bicep-templates/appgw-wafv2-backend-vm-installed-apache-env1
+   cd bicep-templates/appgw-standard_v2-backend-vm-installed-apache
    ```
    
 3. Update the parameter file with your own values:
