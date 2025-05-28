@@ -1,4 +1,5 @@
-Secure hub configuration with routing intent enabled
+## Architecture
+Secure hub configuration with routing intent enabled in Azure Virtual WAN topology.
 
 ```mermaid
 graph TB;
@@ -62,3 +63,55 @@ classDef SLNGW fill:#70b126,color:#fff,stroke:none
 class LNGW1,LNGW2 SLNGW
 
 ```
+
+## Features of the template
+
+- Deploys Azure Virtual WAN with two secure virtual hubs
+- Configures Azure Firewall in each hub with Standard tier
+- Implements Routing Intent for private traffic through the firewalls
+- Creates three virtual networks with Ubuntu VMs for testing connectivity
+- Establishes hub-to-hub connections for inter-hub routing
+- Connects virtual networks to appropriate hubs with virtual network connections
+- Configures firewall policies with network rules allowing traffic flow
+- Optionally enables diagnostic logging to Log Analytics workspace
+- Implements secure connectivity between all virtual networks through the hubs
+
+## Usage
+
+### Prerequisites
+- Azure subscription
+- Resource group created in a supported region
+- Contributor access to the resource group
+- Azure CLI or PowerShell installed for deployment
+
+### Deployment
+
+1. Clone the repository containing the Bicep templates
+2. Navigate to the vwan-securehub-routing-intent directory
+3. Update the parameter.json file with your own values:
+   - locationSite1: Azure region for deployment (default: japaneast)
+   - vmAdminUsername: Username for the VMs
+   - vmAdminPassword: Password for the VMs
+   - enablediagnostics: Set to true/false to enable diagnostic logging
+
+4. Deploy using Azure CLI:
+   ```bash
+   az login
+   az group create --name <your-resource-group> --location <location>
+   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
+   ```
+
+   Or deploy using PowerShell:
+   ```powershell
+   Connect-AzAccount
+   New-AzResourceGroup -Name <your-resource-group> -Location <location>
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
+   ```
+
+5. Verify the deployment in the Azure Portal by checking:
+   - The Virtual WAN and virtual hubs configuration
+   - Azure Firewalls deployed in each hub
+   - Virtual networks and their connections to the hubs
+   - The routing intent configuration for private traffic
+   - Hub-to-hub connectivity
+   - The deployed VMs in each virtual network
