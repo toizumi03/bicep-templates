@@ -178,10 +178,3 @@ module backendvms '../modules/ubuntu20.04.bicep' = [for i in range(0, numberOfIn
   ]
 }]
 
-/* ****************************** enable diagnostic logs ****************************** */
-
-var logAnalyticsWorkspace = '${uniqueString(resourceGroup().id)}la'
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if (enablediagnostics) {
-  name: logAnalyticsWorkspace
-  location: locationSite1
-}
