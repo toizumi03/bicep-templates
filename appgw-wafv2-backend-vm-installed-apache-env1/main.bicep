@@ -3,7 +3,6 @@ param vmAdminUsername string
 @secure()
 param vmAdminPassword string
 param enablediagnostics bool
-param enabledBastion bool
 
 /* ****************************** Cloud-Vnet ****************************** */
 
@@ -43,42 +42,112 @@ resource cloud_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
           addressPrefix: '10.0.2.0/24'
         }
       }
-      {
-        name: 'AzureBastionSubnet'
-        properties: {
-          addressPrefix: '10.0.3.0/24'
-        }
-      }
     ]
   }
 }
 
-module appgwwafv2 '../modules/applicationgateway.bicep' ={
-  name: 'appgw-wafv2'
-  params:{
-    location: locationSite1
-    appGwName: 'appgw-wafv2'
-    maxCapacity: 5
-    minCapacity: 0
-    backendHttpSettings_port: 80
-    backendHttpSettings_protocol: 'Http'
-    subnet_id: cloud_vnet.properties.subnets[1].id
-    backendVMPrivateIPs:[for i in range(0,numberOfInstances):backendvms[i].outputs.privateIP]
-    enablediagnostics: enablediagnostics
-    wafPolicyId: wafPolicy.outputs.policyId
-    logAnalyticsID: logAnalytics.id
+resource AppGWPIP 'Microsoft.Network/publicIPAddresses@2023-04-01' = {
+  name: 'PublicIP'
+  location: locationSite1
+  sku: {
+    name: 'Standard'
+  }
+    zones: [
+    '1'
+    '2'
+    '3'
+  ]
+  properties: {
+    publicIPAllocationMethod: 'Static'
   }
 }
 
-/* ****************************** WAF Policy ****************************** */
- 
-module wafPolicy '../modules/applicationgatewaywaf.bicep' = {
-  name: 'wafPolicy'
+module applicationGateway 'br/public:avm/res/network/application-gateway:0.6.0' = {
+  name: 'ApplicationGateway'
   params: {
-    wafName: 'appGwWafPolicy'
+    // Required parameters
+    name: 'ApplicationGateway'
+    // Non-required parameters
+    backendAddressPools: [
+      {
+        name: 'backendAddressPool1'
+      }
+    ]
+    backendHttpSettingsCollection: [
+      {
+        name: 'backendHttpSettings1'
+        properties: {
+          cookieBasedAffinity: 'Disabled'
+          port: 80
+          protocol: 'Http'
+        }
+      }
+    ]
+    frontendIPConfigurations: [
+      {
+        name: 'frontendIPConfig1'
+        properties: {
+          publicIPAddress: {
+            id: AppGWPIP.id
+          }
+        }
+      }
+    ]
+    frontendPorts: [
+      {
+        name: 'frontendPort1'
+        properties: {
+          port: 80
+        }
+      }
+    ]
+    gatewayIPConfigurations: [
+      {
+        name: 'publicIPConfig1'
+        properties: {
+          subnet: {
+            id: cloud_vnet.properties.subnets[1].id
+          }
+        }
+      }
+    ]
+    httpListeners: [
+      {
+        name: 'httpListener1'
+        properties: {
+          frontendIPConfiguration: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendIPConfigurations', 'ApplicationGateway', 'frontendIPConfig1')
+          }
+          frontendPort: {
+            id: resourceId('Microsoft.Network/applicationGateways/frontendPorts', 'ApplicationGateway', 'frontendPort1')
+          protocol: 'Http'
+        }
+      }
+    }
+    ]
     location: locationSite1
+    requestRoutingRules: [
+      {
+        name: 'requestRoutingRule1'
+        properties: {
+          backendAddressPool: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', 'ApplicationGateway', 'backendAddressPool1')
+          }
+          backendHttpSettings: {
+            id: resourceId('Microsoft.Network/applicationGateways/backendHttpSettingsCollection', 'ApplicationGateway', 'backendHttpSettings1')
+          }
+          httpListener: {
+            id: resourceId('Microsoft.Network/applicationGateways/httpListeners', 'ApplicationGateway', 'httpListener1')
+          }
+          priority: 100
+          ruleType: 'Basic'
+        }
+      }
+    ]
+    sku: 'Standard_v2'
   }
 }
+
 
 module clientvm_ubuntu '../modules/ubuntu20.04.bicep' = {
   name: 'client-ubuntu-vm'
@@ -102,20 +171,12 @@ module backendvms '../modules/ubuntu20.04.bicep' = [for i in range(0, numberOfIn
     location: locationSite1
     subnetId: cloud_vnet.properties.subnets[2].id
     customData: loadFileAsBase64('apache.yml')
+    applicationGatewayBackendAddressPoolsId: resourceId('Microsoft.Network/applicationGateways/backendAddressPools', 'ApplicationGateway', 'backendAddressPool1')
   }
+  dependsOn: [
+    applicationGateway
+  ]
 }]
-
-/* ****************************** enable Bastion ****************************** */
-
-module bastion '../modules/bastion.bicep' = if(enabledBastion){
-  name:'azureBastion' 
-  params: {
-    bastionName: 'azureBastion'
-    location: locationSite1
-    bastionsku: 'Standard'
-    subnetid: cloud_vnet.properties.subnets[3].id
-  }
-}
 
 /* ****************************** enable diagnostic logs ****************************** */
 
