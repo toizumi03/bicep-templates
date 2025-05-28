@@ -1,6 +1,6 @@
-## Application Gateway (WAFv2) with Apache Backends
+## Application Gateway (Standard_v2) with Apache Backends
 
-Configure Application Gateway (WAFv2) using Ubuntu VM (Apache) backend. Diagnostic logs and bastion are optionally deployable.
+Configure Application Gateway (Standard_v2) using Ubuntu VM (Apache) backend. Diagnostic logs and bastion are optionally deployable.
 
 ```mermaid
 graph TB;
@@ -10,11 +10,8 @@ subgraph GR1[Azure JapanEast]
       subgraph GVS1[default:10.0.0.0/24]
         CP1("VM<br/>Name:client-ubuntu-vm")
       end
-      APPGW{{"Application Gateway<br/>Name:appgw-wafv2<br/>SKU:WAF_v2"}}
       subgraph GVS4[appgwsubnet:10.0.1.0/24]
-      end
-      subgraph GVS3[AzureBastionSubnet:10.0.3.0/24]
-        CP3("Azure Bastion")
+      APPGW{{"Application Gateway<br/>Name:applicationgateway<br/>SKU:standard_v2"}}
       end
       subgraph GVS2[backendsubnet:10.0.2.0/24]
         CP4("VM<br/>Name:backend-vm0<br/>Option:installed Apache")
@@ -48,14 +45,12 @@ class APPGW SVPAPPGW
 
 ## Features of the template
 
-- Deploys a WAF_v2 SKU Azure Application Gateway
+- Deploys a Standard_v2 SKU Azure Application Gateway
 - Creates 2 backend virtual machines with Apache web server installed
 - Configures HTTP routing rules to direct traffic to the backend pool
 - Sets up health probe to monitor backend server availability
 - Creates a client VM for testing the application gateway
 - All resources are deployed in a single virtual network with appropriate subnets
-- Optional: Enables diagnostic logs with Log Analytics Workspace
-- Optional: Deploys Azure Bastion for secure VM access
 
 ## Usage
 
@@ -81,9 +76,17 @@ class APPGW SVPAPPGW
    - Modify other parameters as needed
 
 4. Deploy using Azure CLI:
-   ```
+   ```bash
    az login
-   az group deployment create --resource-group <your-resource-group> --template-file main.bicep --parameters parameters.json
+   az group create --name <your-resource-group> --location <location>
+   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
+   ```
+
+   Or deploy using PowerShell:
+   ```powershell
+   Connect-AzAccount
+   New-AzResourceGroup -Name <your-resource-group> -Location <location>
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
    ```
    
 5. Verify the deployment in the Azure Portal by checking:
