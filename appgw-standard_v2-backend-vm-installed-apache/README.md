@@ -1,6 +1,6 @@
 ## Application Gateway (Standard_v2) with Apache Backends
 
-Configure Application Gateway (Standard_v2) using Ubuntu VM (Apache) backend. Diagnostic logs and bastion are optionally deployable.
+Configure Application Gateway (Standard_v2) using Ubuntu VM (Apache) backend. 
 
 ```mermaid
 graph TB;
