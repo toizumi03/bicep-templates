@@ -79,14 +79,14 @@ class APPGW SVPAPPGW
    ```bash
    az login
    az group create --name <your-resource-group> --location <location>
-   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
+   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.bicepparam
    ```
 
    Or deploy using PowerShell:
    ```powershell
    Connect-AzAccount
    New-AzResourceGroup -Name <your-resource-group> -Location <location>
-   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.bicepparam
    ```
    
 5. Verify the deployment in the Azure Portal by checking:
