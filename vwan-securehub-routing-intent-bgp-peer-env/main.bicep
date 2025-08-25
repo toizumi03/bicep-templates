@@ -88,7 +88,7 @@ resource rt1 'Microsoft.Network/routeTables@2023-04-01' = {
         name: 'toVnet1'
         properties: {
           addressPrefix: '10.0.0.0/16'
-          nextHopIpAddress: '10.10.0.5'
+          nextHopIpAddress: '10.10.0.4'
           nextHopType: 'VirtualAppliance'
         }
       }
@@ -153,7 +153,7 @@ module hubbgpconnection '../modules/virtualhubbgpconnection.bicep' = {
     bgpconnectionname: 'bgp-connection-1'
     hubVirtualNetworkConnectionID: vnet_peering_vhub2.id
     ASN: 65001
-    peerIp: '10.10.0.5'
+    peerIp: '10.10.0.4'
   }
   dependsOn: [
     virtualhub1
@@ -345,3 +345,4 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if
   name: logAnalyticsWorkspace
   location: locationSite1
 }
+
