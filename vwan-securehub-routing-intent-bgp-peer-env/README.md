@@ -175,19 +175,3 @@ ssh vmAdminUsername@<nva-public-ip>
 sudo vtysh -c "show bgp summary"
 sudo vtysh -c "show ip route"
 ```
-
-## Important Notes
-
-- **BGP Peering**: The NVA must be properly configured with FRRouting before BGP peering can be established
-- **Custom Routing**: Static routes on vnet3 direct traffic to vnet1 through the NVA instead of the hub
-- **Security**: The firewall allows all traffic for testing purposes - modify rules for production use
-- **Scaling**: This template uses minimal VM sizes - adjust for production workloads
-- **Monitoring**: Enable diagnostic logging to monitor BGP sessions and traffic flows
-
-## Cleanup
-
-To remove all resources created by this template:
-
-```bash
-az group delete --name <your-resource-group> --yes --no-wait
-```
