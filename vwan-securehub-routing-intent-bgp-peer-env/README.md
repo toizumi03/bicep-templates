@@ -13,12 +13,12 @@ subgraph GR1[Azure JapanEast]
   end
   subgraph GV2[cloud_vnet2:10.10.0.0/16]
       subgraph GVS2[default:10.10.0.0/24]
-        NVA("NVA<br/>Name:NVA-FRR<br/>IP:10.10.0.5<br/>AS:65001")
+        NVA("NVA<br/>Name:NVA-FRR<br/>IP:10.10.0.4<br/>AS:65001")
       end
   end
   subgraph GV3[cloud_vnet3:10.20.0.0/16]
       subgraph GVS3[default:10.20.0.0/24]
-        CP3("VM<br/>Name:cloud-vm2<br/>RouteTable: toVnet1 via 10.10.0.5")
+        CP3("VM<br/>Name:cloud-vm2<br/>RouteTable: toVnet1 via 10.10.0.4")
       end
   end
   subgraph GV4[Virtual WAN]
@@ -26,7 +26,7 @@ subgraph GR1[Azure JapanEast]
       subgraph SECHUB1[SecureHub1]
         AZF1("Azure Firewall<br/>Name:vhubFW1")
         RI1("Routing Intent<br/>PrivateTraffic")
-        BGP1("BGP Connection<br/>Peer:10.10.0.5<br/>Remote AS:65001")
+        BGP1("BGP Connection<br/>Peer:10.10.0.4<br/>Remote AS:65001")
       end
     end
   end
@@ -37,7 +37,7 @@ GV1 --Vnet to Hub<br/>Connection--- GV5
 GV2 --Vnet to Hub<br/>Connection--- GV5
 GV2 --VNet Peering--- GV3
 NVA --BGP Peering<br/>Advertises: 10.20.0.0/16--- BGP1
-CP3 --Static Route<br/>10.0.0.0/16 via 10.10.0.5--- NVA
+CP3 --Static Route<br/>10.0.0.0/16 via 10.10.0.4--- NVA
 
 %% Groups style
 classDef GSR fill:#fff,color:#1490df,stroke:#1490df
@@ -92,7 +92,7 @@ class BGP1 SBGP
 
 ### Virtual Hub BGP Connection
 - **Connection Name**: bgp-connection-1
-- **Peer IP**: 10.10.0.5 (NVA IP address)
+- **Peer IP**: 10.10.0.4 (NVA IP address)
 - **Remote ASN**: 65001
 - **Hub ASN**: 65515 (Azure default)
 
@@ -168,7 +168,7 @@ Once deployed, you can test the routing scenarios:
 ```bash
 # SSH to cloud-vm2 (in vnet3) and trace route to cloud-vm1
 ssh vmAdminUsername@<cloud-vm2-public-ip>
-traceroute 10.0.0.4  # Should show path through NVA (10.10.0.5)
+traceroute 10.0.0.4  # Should show path through NVA (10.10.0.4)
 
 # SSH to NVA and check BGP status
 ssh vmAdminUsername@<nva-public-ip>
