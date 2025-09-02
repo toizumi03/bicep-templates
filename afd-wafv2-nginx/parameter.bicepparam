@@ -1,4 +1,4 @@
 using 'main.bicep'
 param locationSite1 = 'japaneast'
-param vmAdminUsername = 'vmAdminPassword'
-param vmAdminPassword = 'vmAdminUsername'
+param vmAdminUsername = 'azureuser'
+param vmAdminPassword = 'P@ssw0rd123!'
