@@ -165,9 +165,10 @@ resource frontDoorRoute 'Microsoft.Cdn/profiles/afdEndpoints/routes@2025-06-01' 
     ]
     forwardingProtocol: 'HttpsOnly'
     linkToDefaultDomain: 'Enabled'
-    httpsRedirect: 'Enabled'
+    httpsRedirect: 'Disabled'
   }
 }
 
 output appServiceHostName string = app.properties.defaultHostName
 output frontDoorEndpointHostName string = frontDoorEndpoint.properties.hostName
+
