@@ -11,20 +11,19 @@ end
 subgraph GR2[Azure Front Door]
     AFD{{"Azure Front Door<br/>Name:test-afd<br/>SKU:Standard/Premium<br/>Endpoint:afd-[unique]<br/>HTTPS Redirect:Enabled<br/>Forwarding Protocol:HttpsOnly"}}
     WAF("WAF Policy<br/>Name:afdwafpolicy<br/>Mode:Detection<br/>State:Enabled")
-    SP("Security Policy<br/>Name:afdsecuritypolicy<br/>Pattern:/*")
+    SP("Security Policy")
 end
 
 subgraph GR3[Azure Region]
     subgraph ASP[App Service Plan]
-        APP("Web App<br/>Name:testapp-[unique]<br/>SKU:S1<br/>HTTPS Only:true<br/>TLS:1.2+<br/>Identity:SystemAssigned")
+        APP("Web App<br/>Name:testapp-[unique]<br/>SKU:S1<br/>HTTPS Only:true<br/>TLS:1.2+")
     end
 end
 
 %% Relation for resources
-IT --> AFD
-AFD --> WAF
+IT --> WAF
 WAF --> SP
-SP --> APP
+SP --> AFD
 AFD --> APP
 
 %% Groups style
