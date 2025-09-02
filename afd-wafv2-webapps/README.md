@@ -57,7 +57,6 @@ class IT SIT
 - Configures security policy to associate WAF with Front Door endpoint for all traffic patterns (*/*)
 - Deploys Azure App Service plan with configurable SKU (default: S1) and capacity
 - Creates a web application with system-assigned managed identity
-- Enforces HTTPS-only access with automatic HTTP to HTTPS redirection
 - Configures minimum TLS version 1.2 for enhanced security
 - Sets up IP security restrictions to allow traffic only from Azure Front Door backend
 - Uses Front Door ID header validation for additional security
