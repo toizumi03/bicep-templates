@@ -199,6 +199,7 @@ resource vnet_peering_vhub1 'Microsoft.Network/virtualHubs/hubVirtualNetworkConn
     remoteVirtualNetwork: {
       id: cloud_vnet1.id
     }
+    enableInternetSecurity: true
   }
   dependsOn: [
     virtualhub1
