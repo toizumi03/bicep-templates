@@ -32,12 +32,16 @@ subgraph GR1[Azure JapanEast]
     subgraph GonpS4[RouteServerSubnet:172.16.3.0/24]
       RS("Route Server<br/>AS:65515")
     end
+    end
+    subgraph GonpS5[ExpressRoute Circuit]
+      ER("ExpressRoute Circuit")
   end
 end
 
 %% Relation for resources
 GV1 --Vnet to Hub <br/>Connection--- GV3
-ERGW1 --ExpressRoute <br/>Connection--- ERGW2
+ERGW1 -- ExpressRoute <br/>Connection--- ER
+ER -- ExpressRoute <br/>Connection--- ERGW2
 NVA --BGP <br/>Peering--- RS
 RS --BGP <br/>Peering--- ERGW2
 
@@ -49,7 +53,7 @@ classDef SGV1 fill:#c1e5f5,color:#000,stroke:#1490df
 class GV1,GV2,GV3,GVS1,GVS2 SGV1
 
 classDef SGonpV fill:#fbe3d6,color:#000,stroke:#1490df
-class GonpV,GonpS1,GonpS2,GonpS3,GonpS4 SGonpV
+class GonpV,GonpS1,GonpS2,GonpS3,GonpS4,GonpS5 SGonpV
 
 classDef SGSH fill:#de2222,color:#fff,stroke:#1490df
 class SECHUB1 SGSH
