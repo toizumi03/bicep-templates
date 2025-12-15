@@ -93,35 +93,40 @@ resource firewall_policy 'Microsoft.Network/firewallPolicies@2023-04-01' = {
   }
 }
 
-resource firewall_network_rules 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2023-04-01' = {
+resource firewall_network_rules 'Microsoft.Network/firewallPolicies/ruleCollectionGroups@2024-07-01' = {
   parent: firewall_policy
-  name: 'networkrule1'
+  name: 'DefaultNetworkRuleCollectionGroup'
   properties: {
-    priority: 100
+    priority: 200
     ruleCollections: [
       {
         ruleCollectionType: 'FirewallPolicyFilterRuleCollection'
-        name: 'allowAll'
         action: {
           type: 'Allow'
         }
         rules: [
           {
             ruleType: 'NetworkRule'
-            sourceAddresses: [
-              '*'
-            ]
-            destinationAddresses: [
-              '*'
-            ]
+            name: 'anyallow'
             ipProtocols: [
               'Any'
             ]
+            sourceAddresses: [
+              '*'
+            ]
+            sourceIpGroups: []
+            destinationAddresses: [
+              '*'
+            ]
+            destinationIpGroups: []
+            destinationFqdns: []
             destinationPorts: [
               '*'
             ]
           }
         ]
+        name: 'rulecollection'
+        priority: 100
       }
     ]
   }
