@@ -132,6 +132,9 @@ class RS SRS
    - The deployed VMs in both cloud and on-premises environments
    - Verify that traffic from cloud-vm1 to the internet is routed through the on-premises NVA
 
+6. Prepare a provisioned ExpressRoute circuit.
+   - Connect the on-premises VNet and ExpressRoute Circuit, as well as the Virtual Hub and ExpressRoute Circuit.
+
 ## How Force Tunneling Works
 
 1. The NVA running FRRouting (FRR) is configured to advertise the default route (0.0.0.0/0) via BGP
