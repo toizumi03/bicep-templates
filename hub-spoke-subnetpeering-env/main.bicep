@@ -142,7 +142,7 @@ resource spoke_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
   }
 }
 
-module spokevm '../modules/ubuntu20.04.bicep' = {
+module spokevm1 '../modules/ubuntu20.04.bicep' = {
   name: 'spoke-vm1'
   params: {
     vmName: 'spoke-vm1'
@@ -151,6 +151,18 @@ module spokevm '../modules/ubuntu20.04.bicep' = {
     location: locationSite1
     usePublicIP: true
     subnetId: spoke_vnet.properties.subnets[0].id
+  }
+}
+
+module spokevm2 '../modules/ubuntu20.04.bicep' = {
+  name: 'spoke-vm2'
+  params: {
+    vmName: 'spoke-vm2'
+    VMadminUsername: vmAdminUsername
+    VMadminpassword: vmAdminPassword
+    location: locationSite1
+    usePublicIP: true
+    subnetId: spoke_vnet.properties.subnets[1].id
   }
 }
 
