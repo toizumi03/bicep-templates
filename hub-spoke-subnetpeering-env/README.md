@@ -13,7 +13,7 @@ subgraph GR1[Azure JapanEast]
         CP1("VM<br/>Name:cloud-vm")
       end
   end
-  subgraph GV2[spoke-vnet1:10.10.0.0/16, 192.168.0.0/16]
+  subgraph GV2[spoke-vnet1:10.10.0.0/16, 192.168.0.0/20]
       subgraph GVS3[subnet-1:10.10.0.0/24]
         CP3("VM<br/>Name:spoke-vm1")
       end
@@ -127,7 +127,7 @@ class VPNGW1,VPNGW2 SVPNGW
   - GatewaySubnet: 10.0.1.0/24 (peered with spoke subnet-1)
 
 ### Spoke Network (spoke-vnet1)
-- Address Space: 10.10.0.0/16, 192.168.0.0/16
+- Address Space: 10.10.0.0/16, 192.168.0.0/20
 - Subnets:
   - subnet-1: 10.10.0.0/24 (peered with hub)
   - subnet-2: 192.168.0.0/24 (NOT peered, isolated)
