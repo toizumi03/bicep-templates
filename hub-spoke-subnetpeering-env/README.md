@@ -116,7 +116,6 @@ class VPNGW1,VPNGW2 SVPNGW
    - The simulated on-premises network with VPN Gateway in JapanWest
    - VPN connection between the two regions
    - The virtual machines in each network
-   - Connectivity between cloud-vm and spoke-vm1 (peered subnets)
 
 ## Network Details
 
