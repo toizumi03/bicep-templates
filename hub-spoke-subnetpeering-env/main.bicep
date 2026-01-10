@@ -120,7 +120,7 @@ resource spoke_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
     addressSpace: {
       addressPrefixes: [
         '10.10.0.0/16'
-        '192.168.0.0/16'
+        '192.168.0.0/20'
       ]
     }
     subnets: [
