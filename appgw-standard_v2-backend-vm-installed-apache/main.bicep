@@ -2,7 +2,6 @@ param locationSite1 string
 param vmAdminUsername string
 @secure()
 param vmAdminPassword string
-param enablediagnostics bool
 
 /* ****************************** Cloud-Vnet ****************************** */
 
@@ -34,6 +33,14 @@ resource cloud_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
         name: 'appgwsubnet'
         properties: {
           addressPrefix: '10.0.1.0/24'
+          delegations: [
+            {
+              name: 'delegationAppGW'
+              properties: {
+                serviceName: 'Microsoft.Network/applicationGateways'
+              }
+            }
+          ]
         }
       }
       {
