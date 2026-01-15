@@ -35,6 +35,14 @@ resource cloud_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
         name: 'appgwsubnet'
         properties: {
           addressPrefix: '10.0.1.0/24'
+          delegations: [
+            {
+              name: 'delegationAppGW'
+              properties: {
+                serviceName: 'Microsoft.Network/applicationGateways'
+              }
+            }
+          ]
         }
       }
       {
@@ -139,3 +147,4 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if
   name: logAnalyticsWorkspace
   location: locationSite1
 }
+
