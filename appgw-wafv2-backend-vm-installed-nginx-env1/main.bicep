@@ -147,4 +147,3 @@ resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if
   name: logAnalyticsWorkspace
   location: locationSite1
 }
-
