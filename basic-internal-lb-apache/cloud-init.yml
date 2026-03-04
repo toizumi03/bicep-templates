@@ -1,7 +1,7 @@
 #cloud-config
 # パッケージ更新
 package_update: true
-packages_upgrade: true
+package_upgrade: true
 # パッケージインストール
 packages:
   - apache2
