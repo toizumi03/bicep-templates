@@ -3,272 +3,339 @@ param locationSite2 string
 param vmAdminUsername string
 @secure()
 param vmAdminPassword string
-var useExisting = false
 param enablediagnostics bool
+var suffix = take(uniqueString(resourceGroup().id), 6)
+var cloudVpnGwName = 'cloud-vpngw-${suffix}'
+var onpreVpnGwName = 'onpre-vpngw-${suffix}'
 
 /* ****************************** Cloud-Vnet ****************************** */
 
-module defaultNSGSite1 '../modules/nsg.bicep' = {
+module nsgSite1 'br/public:avm/res/network/network-security-group:0.5.2' = {
   name: 'NetworkSecurityGroupSite1'
-  params:{
+  params: {
+    name: 'nsg-site1'
     location: locationSite1
-    name: 'nsg-site1'  
   }
 }
-resource cloud_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
+
+module cloudVnet 'br/public:avm/res/network/virtual-network:0.7.2' = {
   name: 'cloud-vnet'
-  location: locationSite1
-  tags: {
-    tagName1: 'toizumi_recipes'
-  }
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        '10.0.0.0/16'
-      ]
+  params: {
+    tags: {
+      project: 'toizumi_recipes'
     }
+    name: 'cloud-vnet'
+    location: locationSite1
+    addressPrefixes: [
+      '10.0.0.0/16'
+    ]
     subnets: [
       {
         name: 'default'
-        properties: {
-          addressPrefix: '10.0.0.0/24'
-          networkSecurityGroup: { id: defaultNSGSite1.outputs.nsgId }
-        }
+        addressPrefix: '10.0.0.0/24'
+        networkSecurityGroupResourceId: nsgSite1.outputs.resourceId
       }
       {
         name: 'GatewaySubnet'
-        properties: {
-          addressPrefix: '10.0.1.0/24'
-        }
+        addressPrefix: '10.0.1.0/24'
       }
     ]
   }
 }
 
-var cloudvpngwName = 'cloud-vpngw'
-module cloudvpngateway '../modules/vpngw_act-act.bicep' = {
-  name: cloudvpngwName
+module cloudVpnGw 'br/public:avm/res/network/virtual-network-gateway:0.10.1' = {
+  name: cloudVpnGwName
   params: {
+    name: cloudVpnGwName
     location: locationSite1
-    gatewayName: cloudvpngwName
-    vnetName: cloud_vnet.name
+    gatewayType: 'Vpn'
+    skuName: 'VpnGw1'
+    virtualNetworkResourceId: cloudVnet.outputs.resourceId
+    clusterSettings: {
+      clusterMode: 'activeActiveBgp'
+      asn: 65010
+    }
     enablePrivateIpAddress: false
-    bgpAsn: 65010
-    useExisting: useExisting
-    logAnalyticsId: logAnalytics.id
-    enablediagnostics: enablediagnostics
+    domainNameLabel: []
+    diagnosticSettings: enablediagnostics ? [
+      {
+        workspaceResourceId: logAnalytics.?outputs.?resourceId ?? ''
+      }
+    ] : []
   }
 }
 
-var lng01Name = 'lng-onp1'
-resource lng_onp1 'Microsoft.Network/localNetworkGateways@2023-04-01' = {
-  name: lng01Name
-  location: locationSite1
-  properties: {
-    gatewayIpAddress: onprevpngateway.outputs.publicIp01Address
-    bgpSettings:{
-      asn: 65020
-      bgpPeeringAddress: split(onprevpngateway.outputs.bgpPeeringAddress, ',')[0]
-    }
-  }
-}
-
-var lng02Name = 'lng-onp2'
-resource lng_onp2 'Microsoft.Network/localNetworkGateways@2023-04-01' = {
-  name: lng02Name
-  location: locationSite1
-  properties: {
-    gatewayIpAddress: onprevpngateway.outputs.publicIp02Address
-    bgpSettings:{
-      asn: 65020
-      bgpPeeringAddress: split(onprevpngateway.outputs.bgpPeeringAddress, ',')[1]
-    }
-  }
-}
-
-resource conncetionCloudtoOnp1 'Microsoft.Network/connections@2023-04-01' = {
-  name: 'fromCloudtoOnp1'
-  location: locationSite1
-  properties: {
-    enableBgp: true
-    virtualNetworkGateway1: {
-      id: cloudvpngateway.outputs.vpngwId
-      properties:{}
-    }
-    localNetworkGateway2: {
-      id: lng_onp1.id
-      properties:{}
-    }
-    connectionType: 'IPsec'
-    routingWeight: 0
-    sharedKey: 'sharedpass'
-  }
-}
-
-resource conncetionCloudtoOnp2 'Microsoft.Network/connections@2023-04-01' = {
-  name: 'fromCloudtoOnp2'
-  location: locationSite1
-  properties: {
-    enableBgp: true
-    virtualNetworkGateway1: {
-      id: cloudvpngateway.outputs.vpngwId
-      properties:{}
-    }
-    localNetworkGateway2: {
-      id: lng_onp2.id
-      properties:{}
-    }
-    connectionType: 'IPsec'
-    routingWeight: 0
-    sharedKey: 'sharedpass'
-  }
-}
-
-module cloudvm '../modules/ubuntu20.04.bicep' = {
-  name: 'cloud-vm'
+module lngOnp1 'br/public:avm/res/network/local-network-gateway:0.4.0' = {
+  name: 'lng-onp1'
   params: {
-    vmName: 'cloud-vm'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
+    name: 'lng-onp1'
     location: locationSite1
-    usePublicIP: true
-    subnetId: cloud_vnet.properties.subnets[0].id
+    localGatewayPublicIpAddress: onpreVpnGw.outputs.?primaryPublicIpAddress ?? ''
+    localNetworkAddressSpace: {
+      addressPrefixes: []
+    }
+    bgpSettings: {
+      localAsn: 65020
+      localBgpPeeringAddress: onpreVpnGw.outputs.?defaultBgpIpAddresses ?? ''
+    }
   }
 }
 
+module lngOnp2 'br/public:avm/res/network/local-network-gateway:0.4.0' = {
+  name: 'lng-onp2'
+  params: {
+    name: 'lng-onp2'
+    location: locationSite1
+    localGatewayPublicIpAddress: onpreVpnGw.outputs.?secondaryPublicIpAddress ?? ''
+    localNetworkAddressSpace: {
+      addressPrefixes: []
+    }
+    bgpSettings: {
+      localAsn: 65020
+      localBgpPeeringAddress: onpreVpnGw.outputs.?secondaryDefaultBgpIpAddress ?? ''
+    }
+  }
+}
+
+module connectionCloudToOnp1 'br/public:avm/res/network/connection:0.1.6' = {
+  name: 'fromCloudtoOnp1'
+  params: {
+    name: 'fromCloudtoOnp1'
+    location: locationSite1
+    virtualNetworkGateway1: {
+      id: cloudVpnGw.outputs.resourceId
+    }
+    connectionType: 'IPsec'
+    localNetworkGateway2ResourceId: lngOnp1.outputs.resourceId
+    vpnSharedKey: 'sharedpass'
+    enableBgp: true
+    routingWeight: 0
+  }
+}
+
+module connectionCloudToOnp2 'br/public:avm/res/network/connection:0.1.6' = {
+  name: 'fromCloudtoOnp2'
+  params: {
+    name: 'fromCloudtoOnp2'
+    location: locationSite1
+    virtualNetworkGateway1: {
+      id: cloudVpnGw.outputs.resourceId
+    }
+    connectionType: 'IPsec'
+    localNetworkGateway2ResourceId: lngOnp2.outputs.resourceId
+    vpnSharedKey: 'sharedpass'
+    enableBgp: true
+    routingWeight: 0
+  }
+}
+
+module cloudvm 'br/public:avm/res/compute/virtual-machine:0.21.0' = {
+name: 'cloud-vm-deploy'
+  params: {
+    name: 'cloud-vm'
+    location: locationSite1
+    osType: 'Linux'
+    vmSize: 'Standard_D4s_v3'
+    availabilityZone: -1
+    adminUsername: vmAdminUsername
+    adminPassword: vmAdminPassword
+    imageReference: {
+      publisher: 'Canonical'
+      offer: 'ubuntu-24_04-lts'
+      sku: 'server'
+      version: 'latest'
+    }
+    osDisk: {
+      caching: 'ReadWrite'
+      diskSizeGB: 30
+      managedDisk: {
+        storageAccountType: 'Premium_LRS'
+      }
+    }
+    nicConfigurations: [
+      {
+        nicSuffix: '-nic-01'
+        ipConfigurations: [
+          {
+            name: 'ipconfig01'
+            subnetResourceId: cloudVnet.outputs.subnetResourceIds[0]
+            pipConfiguration: {
+              publicIpNameSuffix: '-pip-01'
+            }
+          }
+        ]
+      }
+    ]
+    encryptionAtHost: false
+  }
+}
 
 /* ****************************** Onpre-Vnet ****************************** */
 
-module defaultNSGSite2 '../modules/nsg.bicep' = {
+module nsgSite2 'br/public:avm/res/network/network-security-group:0.5.2' = {
   name: 'NetworkSecurityGroupSite2'
-  params:{
+  params: {
+    name: 'nsg-site2'
     location: locationSite2
-    name: 'nsg-site2'  
   }
 }
 
-resource onpre_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
+module onpreVnet 'br/public:avm/res/network/virtual-network:0.7.2' = {
   name: 'onpre-vnet'
-  location: locationSite2
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        '10.100.0.0/16'
-      ]
-    }
+  params: {
+    name: 'onpre-vnet'
+    location: locationSite2
+    addressPrefixes: [
+      '10.100.0.0/16'
+    ]
     subnets: [
       {
         name: 'default'
-        properties: {
-          addressPrefix: '10.100.0.0/24'
-          networkSecurityGroup: { id: defaultNSGSite2.outputs.nsgId }
-        }
+        addressPrefix: '10.100.0.0/24'
+        networkSecurityGroupResourceId: nsgSite2.outputs.resourceId
       }
       {
         name: 'GatewaySubnet'
-        properties: {
-          addressPrefix: '10.100.1.0/24'
-        }
+        addressPrefix: '10.100.1.0/24'
       }
     ]
   }
 }
 
-var onprevpngwName = 'onpre-vpngw'
-module onprevpngateway '../modules/vpngw_act-act.bicep' = {
-  name: onprevpngwName
+module onpreVpnGw 'br/public:avm/res/network/virtual-network-gateway:0.10.1' = {
+  name: onpreVpnGwName
   params: {
+    name: onpreVpnGwName
     location: locationSite2
-    gatewayName: onprevpngwName
-    vnetName: onpre_vnet.name
+    gatewayType: 'Vpn'
+    skuName: 'VpnGw1'
+    virtualNetworkResourceId: onpreVnet.outputs.resourceId
+    clusterSettings: {
+      clusterMode: 'activeActiveBgp'
+      asn: 65020
+    }
     enablePrivateIpAddress: false
-    bgpAsn: 65020
-    logAnalyticsId: logAnalytics.id
-    enablediagnostics: enablediagnostics
+    domainNameLabel: []
+    diagnosticSettings: enablediagnostics ? [
+      {
+        workspaceResourceId: logAnalytics.?outputs.?resourceId ?? ''
+      }
+    ] : []
   }
 }
 
-var lng03Name = 'lng-cloud1'
-resource lng_cloud1 'Microsoft.Network/localNetworkGateways@2023-04-01' = {
-  name: lng03Name
-  location: locationSite2
-  properties: {
-    gatewayIpAddress:cloudvpngateway.outputs.publicIp01Address
-    bgpSettings:{
-      asn: 65010
-      bgpPeeringAddress: split(cloudvpngateway.outputs.bgpPeeringAddress, ',')[0]
+module lngCloud1 'br/public:avm/res/network/local-network-gateway:0.4.0' = {
+  name: 'lng-cloud1'
+  params: {
+    name: 'lng-cloud1'
+    location: locationSite2
+    localGatewayPublicIpAddress: cloudVpnGw.outputs.?primaryPublicIpAddress ?? ''
+    localNetworkAddressSpace: {
+      addressPrefixes: []
+    }
+    bgpSettings: {
+      localAsn: 65010
+      localBgpPeeringAddress: cloudVpnGw.outputs.?defaultBgpIpAddresses ?? ''
     }
   }
 }
 
-var lng04Name = 'lng-cloud2'
-resource lng_cloud2 'Microsoft.Network/localNetworkGateways@2023-04-01' = {
-  name: lng04Name
-  location: locationSite2
-  properties: {
-    gatewayIpAddress:cloudvpngateway.outputs.publicIp02Address
-    bgpSettings:{
-      asn: 65010
-      bgpPeeringAddress: split(cloudvpngateway.outputs.bgpPeeringAddress, ',')[1]
+module lngCloud2 'br/public:avm/res/network/local-network-gateway:0.4.0' = {
+  name: 'lng-cloud2'
+  params: {
+    name: 'lng-cloud2'
+    location: locationSite2
+    localGatewayPublicIpAddress: cloudVpnGw.outputs.?secondaryPublicIpAddress ?? ''
+    localNetworkAddressSpace: {
+      addressPrefixes: []
+    }
+    bgpSettings: {
+      localAsn: 65010
+      localBgpPeeringAddress: cloudVpnGw.outputs.?secondaryDefaultBgpIpAddress ?? ''
     }
   }
 }
 
 // Connection from Onp to Cloud
-resource connectionOnptoCloud1 'Microsoft.Network/connections@2023-04-01' = {
+module connectionOnpToCloud1 'br/public:avm/res/network/connection:0.1.6' = {
   name: 'fromOnptoCloud1'
-  location: locationSite2
-  properties: {
-    enableBgp: true
-    virtualNetworkGateway1: {
-      id: onprevpngateway.outputs.vpngwId
-      properties:{}
-    }
-    localNetworkGateway2: {
-      id: lng_cloud1.id
-      properties:{}
-    }
-    connectionType: 'IPsec'
-    routingWeight: 0
-    sharedKey: 'sharedpass'
-  }
-}
-
-resource connectionOnptoCloud2 'Microsoft.Network/connections@2023-04-01' = {
-  name: 'fromOnptoCloud2'
-  location: locationSite2
-  properties: {
-    enableBgp: true
-    virtualNetworkGateway1: {
-      id: onprevpngateway.outputs.vpngwId
-      properties:{}
-    }
-    localNetworkGateway2: {
-      id: lng_cloud2.id
-      properties:{}
-    }
-    connectionType: 'IPsec'
-    routingWeight: 0
-    sharedKey: 'sharedpass'
-  }
-}
-
-module onprevm '../modules/ubuntu20.04.bicep' = {
-  name: 'onpre-vm'
   params: {
-    vmName: 'onpre-vm'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
+    name: 'fromOnptoCloud1'
     location: locationSite2
-    usePublicIP: true
-    subnetId: onpre_vnet.properties.subnets[0].id
+    virtualNetworkGateway1: {
+      id: onpreVpnGw.outputs.resourceId
+    }
+    connectionType: 'IPsec'
+    localNetworkGateway2ResourceId: lngCloud1.outputs.resourceId
+    vpnSharedKey: 'sharedpass'
+    enableBgp: true
+    routingWeight: 0
   }
 }
 
-/* ****************************** enable diagnostic logs ****************************** */
+module connectionOnpToCloud2 'br/public:avm/res/network/connection:0.1.6' = {
+  name: 'fromOnptoCloud2'
+  params: {
+    name: 'fromOnptoCloud2'
+    location: locationSite2
+    virtualNetworkGateway1: {
+      id: onpreVpnGw.outputs.resourceId
+    }
+    connectionType: 'IPsec'
+    localNetworkGateway2ResourceId: lngCloud2.outputs.resourceId
+    vpnSharedKey: 'sharedpass'
+    enableBgp: true
+    routingWeight: 0
+  }
+}
 
-var logAnalyticsWorkspace = '${uniqueString(resourceGroup().id)}la'
-resource logAnalytics 'Microsoft.OperationalInsights/workspaces@2022-10-01' = if (enablediagnostics) {
-  name: logAnalyticsWorkspace
-  location: locationSite1
+module onpreVm 'br/public:avm/res/compute/virtual-machine:0.21.0' = {
+name: 'onpre-vm-deploy'
+  params: {
+    name: 'onpre-vm'
+    location: locationSite2
+    osType: 'Linux'
+    vmSize: 'Standard_D4s_v3'
+    availabilityZone: -1
+    adminUsername: vmAdminUsername
+    adminPassword: vmAdminPassword
+    imageReference: {
+      publisher: 'Canonical'
+      offer: 'ubuntu-24_04-lts'
+      sku: 'server'
+      version: 'latest'
+    }
+    osDisk: {
+      caching: 'ReadWrite'
+      diskSizeGB: 30
+      managedDisk: {
+        storageAccountType: 'Premium_LRS'
+      }
+    }
+    nicConfigurations: [
+      {
+        nicSuffix: '-nic-01'
+        ipConfigurations: [
+          {
+            name: 'ipconfig01'
+            subnetResourceId: onpreVnet.outputs.subnetResourceIds[0]
+            pipConfiguration: {
+              publicIpNameSuffix: '-pip-01'
+            }
+          }
+        ]
+      }
+    ]
+    encryptionAtHost: false
+  }
+}
+
+/* ****************************** Log Analytics ****************************** */
+var logAnalyticsWorkspaceName = '${uniqueString(resourceGroup().id)}la'
+module logAnalytics 'br/public:avm/res/operational-insights/workspace:0.15.0' = if (enablediagnostics) {
+  name: 'logAnalyticsWorkspace'
+  params: {
+    name: logAnalyticsWorkspaceName
+    location: locationSite1
+  }
 }
