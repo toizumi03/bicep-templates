@@ -1,0 +1,6 @@
+using 'main.bicep'
+param locationSite1 = 'japaneast'
+param locationSite2 = 'japanwest'
+param vmAdminUsername = 'azureuser'
+param vmAdminPassword = 'P@ssw0rd123!'
+param enablediagnostics = false
