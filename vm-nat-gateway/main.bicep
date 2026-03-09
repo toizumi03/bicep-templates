@@ -4,75 +4,145 @@ param vmAdminUsername string
 param vmAdminPassword string
 
 /* ****************************** Cloud-Vnet ****************************** */
-
-module defaultNSGSite1 '../modules/nsg.bicep' = {
+module nsgSite1 'br/public:avm/res/network/network-security-group:0.5.2' = {
   name: 'NetworkSecurityGroupSite1'
-  params:{
+  params: {
+    name: 'nsg-site1'
     location: locationSite1
-    name: 'nsg-site1'  
   }
 }
-resource cloud_vnet 'Microsoft.Network/virtualNetworks@2023-04-01' = {
+
+module cloudVnet 'br/public:avm/res/network/virtual-network:0.7.2' = {
   name: 'cloud-vnet'
-  location: locationSite1
-  tags: {
-    tagName1: 'toizumi_recipes'
-  }
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        '10.0.0.0/16'
-      ]
+  params: {
+    tags: {
+      project: 'toizumi_recipes'
     }
+    name: 'cloud-vnet'
+    location: locationSite1
+    addressPrefixes: [
+      '10.0.0.0/16'
+    ]
     subnets: [
       {
         name: 'default'
-        properties: {
-          addressPrefix: '10.0.0.0/24'
-          networkSecurityGroup: { id: defaultNSGSite1.outputs.nsgId }
-          natGateway: {
-            id: natgateway.outputs.natgatewayId
-          }
-        }
+        addressPrefix: '10.0.0.0/24'
+        networkSecurityGroupResourceId: nsgSite1.outputs.resourceId
       }
       {
         name: 'AzureBastionSubnet'
-        properties: {
-          addressPrefix: '10.0.1.0/24'
-        }
+        addressPrefix: '10.0.1.0/24'
       }
     ]
   }
 }
 
-var bastionName = 'AzureBastion'
-module bastion '../modules/bastion.bicep' = {
-  name: bastionName
+module bastion 'br/public:avm/res/network/bastion-host:0.8.2' = {
+  name: 'bastion-deploy'
   params: {
-    bastionName: bastionName
+    name: 'bastion-host'
     location: locationSite1
-    bastionsku: 'Standard'
-    subnetid: cloud_vnet.properties.subnets[1].id
+    publicIPAddressObject: {
+      name: 'bastion-pip'
+    }
+    virtualNetworkResourceId: cloudVnet.outputs.resourceId
   }
 }
 
-var natgatewayName = 'natgateway'
-module natgateway '../modules/natgateway.bicep' = {
-  name: natgatewayName
+module natGateway 'br/public:avm/res/network/nat-gateway:2.0.1' = {
+  name: 'nat-gateway-deploy'
   params: {
-    natgatewayName: natgatewayName
-    location: locationSite1  
+    name: 'nat-gateway'
+    location: locationSite1
+    availabilityZone: 1
+    publicIPAddresses: [
+      {
+        name: 'nat-gateway-pip-01'
+        availabilityZones: [1]
+      }
+    ]
   }
 }
 
-module ubuntuvm '../modules/ubuntu20.04.bicep' = {
-  name: 'client-vm'
+module Linuxvm 'br/public:avm/res/compute/virtual-machine:0.21.0' = {
+name: 'linux-vm-deploy'
   params: {
-    vmName: 'ubuntu-2004-vm'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
+    name: 'linux-vm'
     location: locationSite1
-    subnetId: cloud_vnet.properties.subnets[0].id
+    osType: 'Linux'
+    vmSize: 'Standard_D4s_v3'
+    availabilityZone: -1
+    adminUsername: vmAdminUsername
+    adminPassword: vmAdminPassword
+    imageReference: {
+      publisher: 'Canonical'
+      offer: 'ubuntu-24_04-lts'
+      sku: 'server'
+      version: 'latest'
+    }
+    osDisk: {
+      caching: 'ReadWrite'
+      diskSizeGB: 30
+      managedDisk: {
+        storageAccountType: 'Premium_LRS'
+      }
+    }
+    nicConfigurations: [
+      {
+        nicSuffix: '-nic-01'
+        ipConfigurations: [
+          {
+            name: 'ipconfig01'
+            subnetResourceId: cloudVnet.outputs.subnetResourceIds[0]
+            pipConfiguration: {
+              publicIpNameSuffix: '-pip-01'
+            }
+          }
+        ]
+      }
+    ]
+    encryptionAtHost: false
+  }
+}
+
+module windowsvm 'br/public:avm/res/compute/virtual-machine:0.21.0' = {
+name: 'windows-vm-deploy'
+  params: {
+    name: 'windows-vm'
+    location: locationSite1
+    osType: 'Windows'
+    vmSize: 'Standard_D4s_v3'
+    availabilityZone: -1
+    adminUsername: vmAdminUsername
+    adminPassword: vmAdminPassword
+    imageReference: {
+      publisher: 'MicrosoftWindowsServer'
+      offer: 'WindowsServer'
+      sku: '2025-datacenter-g2'
+      version: 'latest'
+    }
+    osDisk: {
+      caching: 'ReadWrite'
+      diskSizeGB: 128
+      managedDisk: {
+        storageAccountType: 'Premium_LRS'
+      }
+    }
+    nicConfigurations: [
+      {
+        nicSuffix: '-nic-01'
+        ipConfigurations: [
+          {
+            name: 'ipconfig01'
+            subnetResourceId: cloudVnet.outputs.subnetResourceIds[0]
+            pipConfiguration: {
+              publicIpNameSuffix: '-pip-01'
+            }
+          }
+        ]
+      }
+    ]
+    encryptionAtHost: false
   }
 }
 
