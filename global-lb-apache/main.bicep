@@ -70,7 +70,7 @@ resource globalLBbackendpool 'Microsoft.Network/loadBalancers/backendAddressPool
         name: 'address1'
         properties: {
           loadBalancerFrontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancer1.name, 'LoadBalancerFrontend')
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', LoadBalancer1.name, 'LoadBalancerFrontend')
           }
         }
       }
@@ -78,77 +78,91 @@ resource globalLBbackendpool 'Microsoft.Network/loadBalancers/backendAddressPool
         name: 'address2'
         properties: {
           loadBalancerFrontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', loadBalancer2.name, 'LoadBalancerFrontend')
+            id: resourceId('Microsoft.Network/loadBalancers/frontendIPConfigurations', LoadBalancer2.name, 'LoadBalancerFrontend')
           }
         }
       }
     ]
   }
-  dependsOn: [
-    loadBalancer1
-    loadBalancer2
-  ]
 }
-
 
 /* ****************************** Cloud-Vnet1 ****************************** */
 
-module defaultNSGSite1 '../modules/nsg.bicep' = {
+module nsgSite1 'br/public:avm/res/network/network-security-group:0.5.2' = {
   name: 'NetworkSecurityGroupSite1'
-  params:{
+  params: {
+    name: 'nsg-site1'
     location: locationSite1
-    name: 'nsg-site1'  
-  }
-}
-resource cloud_vnet1 'Microsoft.Network/virtualNetworks@2023-04-01' = {
-  name: 'cloud-vnet1'
-  location: locationSite1
-  tags: {
-    tagName1: 'toizumi_recipes'
-  }
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        '10.0.0.0/16'
-      ]
-    }
-    subnets: [
+    securityRules: [
       {
-        name: 'default'
+        name: 'Allow-HTTP-Inbound'
         properties: {
-          addressPrefix: '10.0.0.0/24'
-          networkSecurityGroup: { id: defaultNSGSite1.outputs.nsgId }
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '80'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 100
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'Allow-SSH-Inbound'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '22'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 110
+          direction: 'Inbound'
         }
       }
     ]
   }
 }
 
-resource LBfrontendIP1 'Microsoft.Network/publicIPAddresses@2023-04-01' = {
-  name: 'LBFrontend-pip1'
-  location: locationSite1
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    publicIPAllocationMethod: 'static'
+module cloudVnet1 'br/public:avm/res/network/virtual-network:0.7.2' = {
+  name: 'cloud-vnet1'
+  params: {
+    tags: {
+      project: 'toizumi_recipes'
+    }
+    name: 'cloud-vnet1'
+    location: locationSite1
+    addressPrefixes: [
+      '10.0.0.0/16'
+    ]
+    subnets: [
+      {
+        name: 'default'
+        addressPrefix: '10.0.0.0/24'
+        networkSecurityGroupResourceId: nsgSite1.outputs.resourceId
+      }
+    ]
   }
 }
 
-resource loadBalancer1 'Microsoft.Network/loadBalancers@2023-04-01' = {
+module LoadBalancer1 'br/public:avm/res/network/load-balancer:0.6.0' = {
   name: 'PublicLB1'
-  location: locationSite1
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
+  params: {
+    name: 'PublicLB1'
+    location: locationSite1
+    skuName: 'Standard'
     frontendIPConfigurations: [
       {
         name: 'LoadBalancerFrontend'
-        properties: {
-          publicIPAddress: {
-            id: LBfrontendIP1.id
-          }
+        publicIPAddressConfiguration: {
+          name: 'PublicLB1-pip-01'
+          skuName: 'Standard'
+          publicIPAllocationMethod: 'Static'
+          availabilityZones: [
+            1
+            2
+            3
+          ]
         }
       }
     ]
@@ -159,118 +173,204 @@ resource loadBalancer1 'Microsoft.Network/loadBalancers@2023-04-01' = {
     ]
     loadBalancingRules: [
       {
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', 'PublicLB1', 'LoadBalancerFrontend')
-          }
-          backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'PublicLB1', 'BackendPool1')
-          }
-          probe: {
-            id: resourceId('Microsoft.Network/loadBalancers/probes', 'PublicLB1', 'lbprobe')
-          }
-          protocol: 'tcp'
-          frontendPort: 80
-          backendPort: 80
-          idleTimeoutInMinutes: 5
-        }
         name: 'lbrule'
+        frontendIPConfigurationName: 'LoadBalancerFrontend'
+        backendAddressPoolName: 'BackendPool1'
+        probeName: 'lbprobe'
+        protocol: 'Tcp'
+        frontendPort: 80
+        backendPort: 80
+        idleTimeoutInMinutes: 5
+        enableFloatingIP: false
       }
     ]
     probes: [
       {
-        properties: {
-          protocol: 'tcp'
-          port: 80
-          intervalInSeconds: 5
-        }
         name: 'lbprobe'
+        protocol: 'Tcp'
+        port: 80
+        intervalInSeconds: 5
       }
     ]
   }
 }
 
-module clientvm1 '../modules/ubuntu20.04.bicep' = {
-  name: 'client-vm1'
+
+module clientvm 'br/public:avm/res/compute/virtual-machine:0.21.0' = {
+  name: 'client-vm-deploy'
   params: {
-    vmName: 'clientvm1'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
+    name: 'client-vm'
     location: locationSite1
-    subnetId: cloud_vnet1.properties.subnets[0].id
-    usePublicIP: true
+    osType: 'Linux'
+    vmSize: 'Standard_D4s_v3'
+    availabilityZone: -1
+    adminUsername: vmAdminUsername
+    adminPassword: vmAdminPassword
+    imageReference: {
+      publisher: 'Canonical'
+      offer: 'ubuntu-24_04-lts'
+      sku: 'server'
+      version: 'latest'
+    }
+    osDisk: {
+      caching: 'ReadWrite'
+      diskSizeGB: 30
+      managedDisk: {
+        storageAccountType: 'Premium_LRS'
+      }
+    }
+    nicConfigurations: [
+      {
+        nicSuffix: '-nic-01'
+        ipConfigurations: [
+          {
+            name: 'ipconfig01'
+            subnetResourceId: cloudVnet1.outputs.subnetResourceIds[0]
+            pipConfiguration: {
+              publicIpNameSuffix: '-pip-01'
+              skuName: 'Standard'
+              publicIPAllocationMethod: 'Static'
+              availabilityZones: [
+                1
+                2
+                3
+              ]
+            }
+          }
+        ]
+      }
+    ]
+    encryptionAtHost: false
   }
 }
 
+
+
 var numberOfInstances1 = 2
-module backendvms1 '../modules/ubuntu20.04.bicep' = [for i in range(0, numberOfInstances1):{
-  name: 'backend-vm${i}'
+module backendvms 'br/public:avm/res/compute/virtual-machine:0.21.0' = [for i in range(0, numberOfInstances1): {
+  name: 'backend-vm-site1-${i}'
   params: {
-    vmName: 'backendvm${i}'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
+    name: 'backend-vm-site1-${i}'
     location: locationSite1
-    subnetId: cloud_vnet1.properties.subnets[0].id
-    loadBalancerBackendAddressPoolsId: loadBalancer1.properties.backendAddressPools[0].id
-    customData: loadFileAsBase64('cloud-init.yml')
+    osType: 'Linux'
+    vmSize: 'Standard_D4s_v3'
+    availabilityZone: -1
+    adminUsername: vmAdminUsername
+    adminPassword: vmAdminPassword
+    customData: loadTextContent('cloud-init.yml')
+    imageReference: {
+      publisher: 'Canonical'
+      offer: 'ubuntu-24_04-lts'
+      sku: 'server'
+      version: 'latest'
+    }
+    osDisk: {
+      caching: 'ReadWrite'
+      diskSizeGB: 30
+      managedDisk: {
+        storageAccountType: 'Premium_LRS'
+      }
+    }
+    nicConfigurations: [
+      {
+        nicSuffix: '-nic-01'
+        ipConfigurations: [
+          {
+            name: 'ipconfig01'
+            subnetResourceId: cloudVnet1.outputs.subnetResourceIds[0]
+            loadBalancerBackendAddressPools: [
+              {
+                id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', LoadBalancer1.outputs.name, 'BackendPool1')
+              }
+            ]
+            pipConfiguration: {
+              publicIpNameSuffix: '-pip-01'
+            }
+          }
+        ]
+      }
+    ]
+    encryptionAtHost: false
   }
 }]
 
 /* ****************************** Cloud-Vnet2 ****************************** */
 
-module defaultNSGSite2 '../modules/nsg.bicep' = {
+module nsgSite2 'br/public:avm/res/network/network-security-group:0.5.2' = {
   name: 'NetworkSecurityGroupSite2'
-  params:{
-    location: locationSite2
+  params: {
     name: 'nsg-site2'
-  }
-}
-resource cloud_vnet2 'Microsoft.Network/virtualNetworks@2023-04-01' = {
-  name: 'cloud-vnet2'
-  location: locationSite2
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        '10.10.0.0/16'
-      ]
-    }
-    subnets: [
+    location: locationSite2
+    securityRules: [
       {
-        name: 'default'
+        name: 'Allow-HTTP-Inbound'
         properties: {
-          addressPrefix: '10.10.0.0/24'
-          networkSecurityGroup: { id: defaultNSGSite2.outputs.nsgId }
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '80'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 100
+          direction: 'Inbound'
+        }
+      }
+      {
+        name: 'Allow-SSH-Inbound'
+        properties: {
+          protocol: 'Tcp'
+          sourcePortRange: '*'
+          destinationPortRange: '22'
+          sourceAddressPrefix: '*'
+          destinationAddressPrefix: '*'
+          access: 'Allow'
+          priority: 110
+          direction: 'Inbound'
         }
       }
     ]
   }
 }
 
-resource LBfrontendIP2 'Microsoft.Network/publicIPAddresses@2023-04-01' = {
-  name: 'LBFrontend-pip2'
-  location: locationSite2
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
-    publicIPAllocationMethod: 'static'
+module cloudVnet2 'br/public:avm/res/network/virtual-network:0.7.2' = {
+  name: 'cloud-vnet2'
+  params: {
+    tags: {
+      project: 'toizumi_recipes'
+    }
+    name: 'cloud-vnet2'
+    location: locationSite2
+    addressPrefixes: [
+      '10.10.0.0/16'
+    ]
+    subnets: [
+      {
+        name: 'default'
+        addressPrefix: '10.10.0.0/24'
+        networkSecurityGroupResourceId: nsgSite2.outputs.resourceId
+      }
+    ]
   }
 }
 
-resource loadBalancer2 'Microsoft.Network/loadBalancers@2023-04-01' = {
+module LoadBalancer2 'br/public:avm/res/network/load-balancer:0.6.0' = {
   name: 'PublicLB2'
-  location: locationSite2
-  sku: {
-    name: 'Standard'
-  }
-  properties: {
+  params: {
+    name: 'PublicLB2'
+    location: locationSite2
+    skuName: 'Standard'
     frontendIPConfigurations: [
       {
         name: 'LoadBalancerFrontend'
-        properties: {
-          publicIPAddress: {
-            id: LBfrontendIP2.id
-          }
+        publicIPAddressConfiguration: {
+          name: 'PublicLB2-pip-01'
+          skuName: 'Standard'
+          publicIPAllocationMethod: 'Static'
+          availabilityZones: [
+            1
+            2
+            3
+          ]
         }
       }
     ]
@@ -281,59 +381,73 @@ resource loadBalancer2 'Microsoft.Network/loadBalancers@2023-04-01' = {
     ]
     loadBalancingRules: [
       {
-        properties: {
-          frontendIPConfiguration: {
-            id: resourceId('Microsoft.Network/loadBalancers/frontendIpConfigurations', 'PublicLB2', 'LoadBalancerFrontend')
-          }
-          backendAddressPool: {
-            id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', 'PublicLB2', 'BackendPool1')
-          }
-          probe: {
-            id: resourceId('Microsoft.Network/loadBalancers/probes', 'PublicLB2', 'lbprobe')
-          }
-          protocol: 'tcp'
-          frontendPort: 80
-          backendPort: 80
-          idleTimeoutInMinutes: 5
-        }
         name: 'lbrule'
+        frontendIPConfigurationName: 'LoadBalancerFrontend'
+        backendAddressPoolName: 'BackendPool1'
+        probeName: 'lbprobe'
+        protocol: 'Tcp'
+        frontendPort: 80
+        backendPort: 80
+        idleTimeoutInMinutes: 5
+        enableFloatingIP: false
       }
     ]
     probes: [
       {
-        properties: {
-          protocol: 'tcp'
-          port: 80
-          intervalInSeconds: 5
-        }
         name: 'lbprobe'
+        protocol: 'Tcp'
+        port: 80
+        intervalInSeconds: 5
       }
     ]
   }
 }
 
-module clientvm2 '../modules/ubuntu20.04.bicep' = {
-  name: 'client-vm2'
-  params: {
-    vmName: 'clientvm2'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
-    location: locationSite2
-    subnetId: cloud_vnet2.properties.subnets[0].id
-    usePublicIP: true
-  }
-}
 
 var numberOfInstances2 = 2
-module backendvms2 '../modules/ubuntu20.04.bicep' = [for i in range(0, numberOfInstances2):{
-  name: 'backend-vm2${i}'
+module backendvms2 'br/public:avm/res/compute/virtual-machine:0.21.0' = [for i in range(0, numberOfInstances2): {
+  name: 'backend-vm-site2-${i}'
   params: {
-    vmName: 'backendvm2${i}'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
+    name: 'backendvm-site2-${i}'
     location: locationSite2
-    subnetId: cloud_vnet2.properties.subnets[0].id
-    loadBalancerBackendAddressPoolsId: loadBalancer2.properties.backendAddressPools[0].id
-    customData: loadFileAsBase64('cloud-init.yml')
+    osType: 'Linux'
+    vmSize: 'Standard_D4s_v3'
+    availabilityZone: -1
+    adminUsername: vmAdminUsername
+    adminPassword: vmAdminPassword
+    customData: loadTextContent('cloud-init.yml')
+    imageReference: {
+      publisher: 'Canonical'
+      offer: 'ubuntu-24_04-lts'
+      sku: 'server'
+      version: 'latest'
+    }
+    osDisk: {
+      caching: 'ReadWrite'
+      diskSizeGB: 30
+      managedDisk: {
+        storageAccountType: 'Premium_LRS'
+      }
+    }
+    nicConfigurations: [
+      {
+        nicSuffix: '-nic-01'
+        ipConfigurations: [
+          {
+            name: 'ipconfig01'
+            subnetResourceId: cloudVnet2.outputs.subnetResourceIds[0]
+            loadBalancerBackendAddressPools: [
+              {
+                id: resourceId('Microsoft.Network/loadBalancers/backendAddressPools', LoadBalancer2.outputs.name, 'BackendPool1')
+              }
+            ]
+            pipConfiguration: {
+              publicIpNameSuffix: '-pip-01'
+            }
+          }
+        ]
+      }
+    ]
+    encryptionAtHost: false
   }
 }]
