@@ -5,94 +5,178 @@ param vmAdminPassword string
 
 
 /* ****************************** Cloud-Vnet1 ****************************** */
-
-module defaultNSGSite1 '../modules/nsg.bicep' = {
+module nsgSite1 'br/public:avm/res/network/network-security-group:0.5.2' = {
   name: 'NetworkSecurityGroupSite1'
-  params:{
+  params: {
+    name: 'nsg-site1'
     location: locationSite1
-    name: 'nsg-site1'  
   }
 }
-resource cloud_vnet1 'Microsoft.Network/virtualNetworks@2023-04-01' = {
+
+module cloudVnet1 'br/public:avm/res/network/virtual-network:0.7.2' = {
   name: 'cloud-vnet1'
-  location: locationSite1
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        '10.0.0.0/16'
-        '172.16.0.0/16'
-      ]
+  params: {
+    tags: {
+      project: 'toizumi_recipes'
     }
+    name: 'cloud-vnet1'
+    location: locationSite1
+    addressPrefixes: [
+      '10.0.0.0/16'
+      '172.16.0.0/16'
+    ]
     subnets: [
       {
         name: 'subnet-1'
-        properties: {
-          addressPrefix: '10.0.0.0/24'
-          networkSecurityGroup: { id: defaultNSGSite1.outputs.nsgId }
-        }
+        addressPrefix: '10.0.0.0/24'
+        networkSecurityGroupResourceId: nsgSite1.outputs.resourceId
       }
       {
         name: 'subnet-2'
-        properties: {
-          addressPrefix: '10.0.1.0/24'
-        }
+        addressPrefix: '10.0.1.0/24'
       }
       {
         name: 'subnet-3'
-        properties: {
-          addressPrefix: '172.16.0.0/16'
-        }
+        addressPrefix: '172.16.0.0/16'
       }
     ]
   }
 }
 
-module cloudvm1 '../modules/ubuntu20.04.bicep' = {
-  name: 'cloud-vm1'
+module cloudVnet1vms 'br/public:avm/res/compute/virtual-machine:0.21.0' = [for i in range(0, 3): {
+  name: 'cloud-vm${i + 1}-deploy'
   params: {
-    vmName: 'cloud-vm1'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
+    name: 'cloud-vm${i + 1}'
     location: locationSite1
-    usePublicIP: true
-    subnetId: cloud_vnet1.properties.subnets[0].id
+    osType: 'Linux'
+    vmSize: 'Standard_D4s_v3'
+    availabilityZone: -1
+    adminUsername: vmAdminUsername
+    adminPassword: vmAdminPassword
+    imageReference: {
+      publisher: 'Canonical'
+      offer: 'ubuntu-24_04-lts'
+      sku: 'server'
+      version: 'latest'
+    }
+    osDisk: {
+      caching: 'ReadWrite'
+      diskSizeGB: 30
+      managedDisk: {
+        storageAccountType: 'Premium_LRS'
+      }
+    }
+    nicConfigurations: [
+      {
+        nicSuffix: '-nic-01'
+        ipConfigurations: [
+          {
+            name: 'ipconfig01'
+            subnetResourceId: cloudVnet1.outputs.subnetResourceIds[i]
+            pipConfiguration: {
+              publicIpNameSuffix: '-pip-01'
+            }
+          }
+        ]
+      }
+    ]
+    encryptionAtHost: false
+  }
+}]
+
+
+/* ****************************** Cloud-Vnet2 ****************************** */
+module cloudVnet2 'br/public:avm/res/network/virtual-network:0.7.2' = {
+  name: 'cloud-vnet2'
+  params: {
+    tags: {
+      project: 'toizumi_recipes'
+    }
+    name: 'cloud-vnet2'
+    location: locationSite1
+    addressPrefixes: [
+      '10.100.0.0/16'
+      '172.16.0.0/16'
+    ]
+    subnets: [
+      {
+        name: 'subnet-4'
+        addressPrefix: '10.100.0.0/24'
+        networkSecurityGroupResourceId: nsgSite1.outputs.resourceId
+      }
+      {
+        name: 'subnet-5'
+        addressPrefix: '10.100.1.0/24'
+      }
+      {
+        name: 'subnet-6'
+        addressPrefix: '172.16.0.0/16'
+      }
+    ]
   }
 }
 
-module cloudvm2 '../modules/ubuntu20.04.bicep' = {
-  name: 'cloud-vm2'
+module cloudVnet2vms 'br/public:avm/res/compute/virtual-machine:0.21.0' = [for i in range(0, 3): {
+  name: 'cloud-vm${i + 4}-deploy'
   params: {
-    vmName: 'cloud-vm2'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
+    name: 'cloud-vm${i + 4}'
     location: locationSite1
-    usePublicIP: true
-    subnetId: cloud_vnet1.properties.subnets[1].id
+    osType: 'Linux'
+    vmSize: 'Standard_D4s_v3'
+    availabilityZone: -1
+    adminUsername: vmAdminUsername
+    adminPassword: vmAdminPassword
+    imageReference: {
+      publisher: 'Canonical'
+      offer: 'ubuntu-24_04-lts'
+      sku: 'server'
+      version: 'latest'
+    }
+    osDisk: {
+      caching: 'ReadWrite'
+      diskSizeGB: 30
+      managedDisk: {
+        storageAccountType: 'Premium_LRS'
+      }
+    }
+    nicConfigurations: [
+      {
+        nicSuffix: '-nic-01'
+        ipConfigurations: [
+          {
+            name: 'ipconfig01'
+            subnetResourceId: cloudVnet2.outputs.subnetResourceIds[i]
+            pipConfiguration: {
+              publicIpNameSuffix: '-pip-01'
+            }
+          }
+        ]
+      }
+    ]
+    encryptionAtHost: false
   }
+}]
+
+
+/* ****************************** Subnet Peering ****************************** */
+resource cloudVnet1Ref 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
+  name: 'cloud-vnet1'
 }
 
-module cloudvm3 '../modules/ubuntu20.04.bicep' = {
-  name: 'cloud-vm3'
-  params: {
-    vmName: 'cloud-vm3'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
-    location: locationSite1
-    usePublicIP: true
-    subnetId: cloud_vnet1.properties.subnets[2].id
-  }
+resource cloudVnet2Ref 'Microsoft.Network/virtualNetworks@2024-05-01' existing = {
+  name: 'cloud-vnet2'
 }
 
-resource spoke_peer 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2024-05-01' = {
-  parent: cloud_vnet1
+resource vnet1toVnet2Peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2024-05-01' = {
+  parent: cloudVnet1Ref
   name: 'vnet1tovnet2'
   properties: {
     remoteVirtualNetwork: {
-      id: cloud_vnet2.id
+      id: cloudVnet2Ref.id
     }
     allowForwardedTraffic: true
-    allowGatewayTransit: false
     allowVirtualNetworkAccess: true
+    useRemoteGateways: false
     peerCompleteVnets: false
     localSubnetNames: [
       'subnet-1'
@@ -103,87 +187,18 @@ resource spoke_peer 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
       'subnet-5'
     ]
   }
+  dependsOn: [
+    cloudVnet1
+    cloudVnet2
+  ]
 }
 
-/* ****************************** Cloud-Vnet2 ****************************** */
-resource cloud_vnet2 'Microsoft.Network/virtualNetworks@2023-04-01' = {
-  name: 'cloud-vnet2'
-  location: locationSite1
-  properties: {
-    addressSpace: {
-      addressPrefixes: [
-        '10.100.0.0/16'
-        '172.16.0.0/16'
-      ]
-    }
-    subnets: [
-      {
-        name: 'subnet-4'
-        properties: {
-          addressPrefix: '10.100.0.0/24'
-          networkSecurityGroup: { id: defaultNSGSite1.outputs.nsgId }
-        }
-      }
-      {
-        name: 'subnet-5'
-        properties: {
-          addressPrefix: '10.100.1.0/24'
-          networkSecurityGroup: { id: defaultNSGSite1.outputs.nsgId }
-        }
-      }
-      {
-        name: 'subnet-6'
-        properties: {
-          addressPrefix: '172.16.0.0/16'
-          networkSecurityGroup: { id: defaultNSGSite1.outputs.nsgId }
-        }
-      }
-    ]
-  }
-}
-
-module cloudvm4 '../modules/ubuntu20.04.bicep' = {
-  name: 'cloud-vm4'
-  params: {
-    vmName: 'cloud-vm4'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
-    location: locationSite1
-    usePublicIP: true
-    subnetId: cloud_vnet2.properties.subnets[0].id
-  }
-}
-
-module cloudvm5 '../modules/ubuntu20.04.bicep' = {
-  name: 'cloud-vm5'
-  params: {
-    vmName: 'cloud-vm5'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
-    location: locationSite1
-    usePublicIP: true
-    subnetId: cloud_vnet2.properties.subnets[1].id
-  }
-}
-
-module cloudvm6 '../modules/ubuntu20.04.bicep' = {
-  name: 'cloud-vm6'
-  params: {
-    vmName: 'cloud-vm6'
-    VMadminUsername: vmAdminUsername
-    VMadminpassword: vmAdminPassword
-    location: locationSite1
-    usePublicIP: true
-    subnetId: cloud_vnet2.properties.subnets[2].id
-  }
-}
-
-resource cloud_peer 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2024-05-01' = {
-  parent: cloud_vnet2
+resource vnet2toVnet1Peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2024-05-01' = {
+  parent: cloudVnet2Ref
   name: 'vnet2tovnet1'
   properties: {
     remoteVirtualNetwork: {
-      id: cloud_vnet1.id
+      id: cloudVnet1Ref.id
     }
     allowForwardedTraffic: true
     allowVirtualNetworkAccess: true
@@ -198,4 +213,8 @@ resource cloud_peer 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@20
       'subnet-2'
     ]
   }
+  dependsOn: [
+    cloudVnet1
+    cloudVnet2
+  ]
 }
