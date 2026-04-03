@@ -1,0 +1,110 @@
+## Architecture
+Site-to-Site VPN connection using APIPA-based BGP between an Azure VPN Gateway (Active-Active) and an on-premises environment simulated by StrongSwan (IPsec) + FRR (BGP) running on a Ubuntu VM.
+
+```mermaid
+graph TB;
+%% Groups and Services
+subgraph GR2[Azure JapanWest]
+  subgraph GV2[onpre-vnet:10.100.0.0/16]
+    subgraph GVS4[StrongSwan-FRR-Subnet:10.100.1.0/24]
+      SSVPN{{"StrongSwan + FRR VM<br/>Name:StrongSwanVM<br/>Private IP:10.100.1.4<br/>BGP APIPA:169.254.22.20<br/>AS:65511"}}
+    end
+    subgraph GVS3[default:10.100.0.0/24]
+      CP2("VM<br/>Name:onpre-vm")
+    end
+  end
+  RT("Route Table<br/>Name:onpre-rt<br/>10.0.0.0/16 → StrongSwanVM")
+end
+subgraph GR1[Azure JapanEast]
+  subgraph GV1[cloud-vnet:10.0.0.0/16]
+    subgraph GVS2[GatewaySubnet:10.0.1.0/24]
+      VPNGW1{{"VPN Gateway<br/>Name:cloud-vpngw<br/>SKU:VpnGw1AZ<br/>ActAct-Mode:true<br/>AS:65515<br/>APIPA:169.254.22.10/169.254.22.11"}}
+    end
+    subgraph GVS1[default:10.0.0.0/24]
+      CP1("VM<br/>Name:cloud-vm")
+    end
+  end
+  LNGW1("Local Network Gateway<br/>Name:lng-onp1<br/>BGP peer:169.254.22.20<br/>AS:65511")
+end
+
+%% Relation for resources
+VPNGW1 --IPSec Tunnel 1 (BGP APIPA)--- SSVPN
+VPNGW1 --IPSec Tunnel 2 (BGP APIPA)--- SSVPN
+RT -. applied to .-> GVS3
+
+%% Groups style
+classDef GSR fill:#fff,color:#1490df,stroke:#1490df
+class GR1,GR2 GSR
+
+classDef SGV1 fill:#c1e5f5,color:#000,stroke:#1490df
+class GV1,GVS1,GVS2,GVS3,GVS4 SGV1
+
+classDef SGV2 fill:#c1e5f5,color:#000,stroke:#1490df
+class GV2 SGV2
+
+%% Service Style
+classDef SCP fill:#4466dd,color:#fff,stroke:none
+class CP1,CP2 SCP
+
+classDef SVPNGW fill:#57d1ed,color:#000,stroke:none
+class VPNGW1,SSVPN SVPNGW
+
+classDef SLNGW fill:#70b126,color:#fff,stroke:none
+class LNGW1 SLNGW
+
+classDef SRT fill:#e8a838,color:#fff,stroke:none
+class RT SRT
+
+```
+
+## Features of the template
+
+- Deploys an Azure VPN Gateway in Active-Active mode (SKU: VpnGw1AZ, AS: 65515) with APIPA custom BGP IP addresses (169.254.22.10 and 169.254.22.11)
+- Simulates an on-premises environment using a Ubuntu VM running StrongSwan (IPsec) and FRR (BGP) with cloud-init provisioning
+- Configures APIPA-based BGP between the Azure VPN Gateway and the StrongSwan/FRR VM (APIPA: 169.254.22.20, AS: 65511)
+- Establishes two IPsec tunnels from the StrongSwan VM to each Active-Active VPN Gateway instance for high availability
+- Uses a Local Network Gateway (`lng-onp1`) to represent the on-premises BGP peer with APIPA address
+- Deploys virtual networks in two Azure regions (10.0.0.0/16 in JapanEast and 10.100.0.0/16 in JapanWest)
+- Configures a route table on the on-premises default subnet to route traffic to the cloud VNet via the StrongSwan VM (IP forwarding enabled)
+- Includes a test VM (`cloud-vm`) in the cloud VNet and a test VM (`onpre-vm`) in the on-premises VNet for connectivity testing
+- Provides option to enable diagnostic logs for the VPN Gateway via Log Analytics Workspace
+
+## Usage
+
+### Prerequisites
+- Azure subscription
+- Resource group created in supported regions (JapanEast and JapanWest)
+- Contributor access to the resource group
+- Azure CLI or PowerShell installed for deployment
+
+### Deployment
+
+1. Clone the repository containing the Bicep templates
+2. Navigate to the `s2s-APIPA-bgp-with-strongswan-frr` directory
+3. Update the `parameter.json` file with your own values:
+   - `locationSite1`: Azure region for the cloud network (default: japaneast)
+   - `locationSite2`: Azure region for the on-premises simulation (default: japanwest)
+   - `vmAdminUsername`: Username for the VMs
+   - `vmAdminPassword`: Password for the VMs
+   - `enablediagnostics`: Set to `true` to enable diagnostic logs (creates a Log Analytics Workspace)
+
+4. Deploy using Azure CLI:
+   ```bash
+   az login
+   az group create --name <your-resource-group> --location <location>
+   az deployment group create --resource-group <your-resource-group> --template-file main.bicep --parameters parameter.json
+   ```
+
+   Or deploy using PowerShell:
+   ```powershell
+   Connect-AzAccount
+   New-AzResourceGroup -Name <your-resource-group> -Location <location>
+   New-AzResourceGroupDeployment -ResourceGroupName <your-resource-group> -TemplateFile main.bicep -TemplateParameterFile parameter.json
+   ```
+
+5. Verify the deployment in the Azure Portal by checking:
+   - The VPN Gateway status and its two Active-Active connections
+   - BGP peers and learned routes in the VPN Gateway configuration
+   - The StrongSwan VM's IPsec tunnel status (`sudo ipsec statusall`)
+   - FRR BGP session status on the StrongSwan VM (`sudo vtysh -c "show bgp summary"`)
+   - Connectivity between `cloud-vm` (10.0.0.x) and `onpre-vm` (10.100.0.x)
