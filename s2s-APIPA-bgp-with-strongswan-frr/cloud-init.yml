@@ -1,0 +1,106 @@
+#cloud-config
+package_update: true
+package_upgrade: true
+packages:
+  - strongswan
+
+write_files:
+  - path: /etc/ipsec.conf
+    content: |
+      config setup
+          charondebug="ike 1, knl 1"
+
+      conn azure-base
+          keyexchange=ikev2
+          type=tunnel
+          authby=psk
+          left=%any
+          leftid=__STRONGSWAN_PIP__
+          leftsubnet=169.254.22.20/32
+          ike=aes256-sha256-modp1024
+          esp=aes256-sha256
+          auto=start
+
+      # Tunnel 1 (to Gateway instance PIP1)
+      conn azure-aa-1
+          also=azure-base
+          right=__VPNGW_PIP1__
+          rightid=__VPNGW_PIP1__
+          rightsubnet=169.254.22.10/32
+
+      # Tunnel 2 (to Gateway instance PIP2)
+      conn azure-aa-2
+          also=azure-base
+          right=__VPNGW_PIP2__
+          rightid=__VPNGW_PIP2__
+          rightsubnet=169.254.22.11/32
+
+  - path: /etc/ipsec.secrets
+    content: |
+      __STRONGSWAN_PIP__ __VPNGW_PIP1__ : PSK "sharedpass"
+      __STRONGSWAN_PIP__ __VPNGW_PIP2__ : PSK "sharedpass"
+
+  - path: /tmp/frr.conf
+    permissions: '0640'
+    content: |
+      frr defaults traditional
+      !
+      router bgp 65511
+       no bgp ebgp-requires-policy
+       bgp router-id 169.254.22.20
+       bgp log-neighbor-changes
+       !
+       neighbor 169.254.22.10 remote-as 65515
+       neighbor 169.254.22.10 ebgp-multihop 2
+       neighbor 169.254.22.10 timers 10 30
+       neighbor 169.254.22.10 update-source 169.254.22.20
+       !
+       neighbor 169.254.22.11 remote-as 65515
+       neighbor 169.254.22.11 ebgp-multihop 2
+       neighbor 169.254.22.11 timers 10 30
+       neighbor 169.254.22.11 update-source 169.254.22.20
+       !
+       address-family ipv4 unicast
+        network 10.100.0.0/16
+       exit-address-family
+      !
+
+  - path: /etc/netplan/99-bgp-loopback.yaml
+    content: |
+      network:
+        version: 2
+        ethernets:
+          lo:
+            addresses:
+              - 169.254.22.20/32
+
+  - path: /etc/networkd-dispatcher/routable.d/50-bgp-routes
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      ip route replace 169.254.22.10/32 via __SUBNET_GW__ dev eth0 src 169.254.22.20
+      ip route replace 169.254.22.11/32 via __SUBNET_GW__ dev eth0 src 169.254.22.20
+
+runcmd:
+  # Enable IP forwarding
+  - sysctl -w net.ipv4.ip_forward=1
+  - echo "net.ipv4.ip_forward=1" > /etc/sysctl.d/99-ip-forward.conf
+  # Install FRR from official repository
+  - curl -s https://deb.frrouting.org/frr/keys.gpg | tee /usr/share/keyrings/frrouting.gpg > /dev/null
+  - bash -c 'echo "deb [signed-by=/usr/share/keyrings/frrouting.gpg] https://deb.frrouting.org/frr $(. /etc/os-release && echo $VERSION_CODENAME) frr-stable" > /etc/apt/sources.list.d/frr.list'
+  - apt-get update
+  - apt-get install -y frr frr-pythontools
+  # Set FRR permissions and enable BGP
+  - cp /tmp/frr.conf /etc/frr/frr.conf
+  - chown frr:frr /etc/frr/frr.conf
+  - chown frr:frr /etc/frr/daemons
+  - chmod 640 /etc/frr/daemons
+  - sed -i 's/bgpd=no/bgpd=yes/' /etc/frr/daemons
+  # Apply loopback config and static routes
+  - netplan apply
+  # Static routes to BGP peers
+  - ip route replace 169.254.22.10/32 via __SUBNET_GW__ dev eth0 src 169.254.22.20
+  - ip route replace 169.254.22.11/32 via __SUBNET_GW__ dev eth0 src 169.254.22.20
+  # Restart services
+  - systemctl restart frr
+  - systemctl restart strongswan-starter
